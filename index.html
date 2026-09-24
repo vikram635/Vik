@@ -6,8 +6,7 @@
 
 <title>Vikram Media Portal</title>
 
-<meta name="description"
-content="Vikram Media Portal - Secure photo and video management portal">
+<meta name="description" content="Vikram Media Portal - Secure photo and video management portal">
 
 <style>
 *{
@@ -58,21 +57,13 @@ button{
   box-shadow:0 30px 90px rgba(0,0,0,.5);
 }
 
-/* =========================
-   HERO
-========================= */
-
+/* HERO */
 .hero{
   padding:55px;
   display:flex;
   flex-direction:column;
   justify-content:center;
-  background:
-    linear-gradient(
-      145deg,
-      rgba(124,58,237,.40),
-      rgba(37,99,235,.10)
-    );
+  background: linear-gradient(145deg, rgba(124,58,237,.40), rgba(37,99,235,.10));
 }
 
 .logo{
@@ -95,12 +86,7 @@ button{
 }
 
 .gradient{
-  background:linear-gradient(
-    90deg,
-    #c4b5fd,
-    #60a5fa,
-    #22d3ee
-  );
+  background:linear-gradient(90deg, #c4b5fd, #60a5fa, #22d3ee);
   -webkit-background-clip:text;
   background-clip:text;
   color:transparent;
@@ -136,10 +122,7 @@ button{
   background:rgba(255,255,255,.08);
 }
 
-/* =========================
-   AUTH
-========================= */
-
+/* AUTH */
 .auth{
   padding:45px;
   display:flex;
@@ -164,7 +147,6 @@ button{
 }
 
 /* TABS */
-
 .tabs{
   display:flex;
   gap:5px;
@@ -191,7 +173,6 @@ button{
 }
 
 /* INPUTS */
-
 .input-group{
   margin-bottom:15px;
 }
@@ -252,7 +233,6 @@ input:focus{
 }
 
 /* BUTTON */
-
 .main-btn{
   width:100%;
   border:0;
@@ -275,7 +255,6 @@ input:focus{
 }
 
 /* MESSAGE */
-
 .message{
   display:none;
   padding:12px;
@@ -401,6 +380,7 @@ input:focus{
   border-radius:20px;
   background:rgba(255,255,255,.06);
   transition:.2s;
+  cursor:pointer;
 }
 
 .dashboard-card:hover{
@@ -430,26 +410,46 @@ input:focus{
   line-height:1.5;
 }
 
+.upload-status{
+  margin-top:20px;
+  padding:15px;
+  background:rgba(255,255,255,.05);
+  border-radius:12px;
+  font-size:14px;
+}
+
+/* MEDIA GALLERY */
+.gallery{
+  margin-top:30px;
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));
+  gap:15px;
+}
+
+.media-item{
+  background:rgba(0,0,0,.3);
+  border-radius:12px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.1);
+}
+
+.media-item img, .media-item video{
+  width:100%;
+  height:140px;
+  object-fit:cover;
+  display:block;
+}
+
 .admin-panel{
   margin-top:25px;
   padding:25px;
   border-radius:20px;
   border:1px solid rgba(124,58,237,.25);
-  background:linear-gradient(
-    135deg,
-    rgba(124,58,237,.13),
-    rgba(37,99,235,.08)
-  );
+  background:linear-gradient(135deg, rgba(124,58,237,.13), rgba(37,99,235,.08));
 }
 
-.admin-panel h2{
-  margin-bottom:8px;
-}
-
-.admin-panel p{
-  color:#9da5b9;
-  line-height:1.6;
-}
+.admin-panel h2{ margin-bottom:8px; }
+.admin-panel p{ color:#9da5b9; line-height:1.6; }
 
 .status{
   margin-top:25px;
@@ -459,10 +459,7 @@ input:focus{
   color:#86efac;
 }
 
-/* =========================
-   RESPONSIVE
-========================= */
-
+/* RESPONSIVE */
 @media(max-width:800px){
   body{ padding:10px; }
   .container{ grid-template-columns:1fr; min-height:auto; border-radius:22px; }
@@ -487,7 +484,6 @@ input:focus{
 
 <!-- LOGIN / SIGNUP PAGE -->
 <div id="authPage" class="container">
-
   <section class="hero">
     <div class="logo">V</div>
     <h1>Vikram<br><span class="gradient">Media Portal</span></h1>
@@ -586,35 +582,43 @@ input:focus{
     <span id="adminBadge" class="admin-badge hidden">ADMIN ACCOUNT</span>
   </div>
 
+  <!-- HIDDEN FILE INPUT -->
+  <input type="file" id="mediaInput" class="hidden" accept="image/*,video/*" multiple>
+
   <div class="cards">
-    <div class="dashboard-card">
+    <div class="dashboard-card" onclick="triggerUpload('image/*')">
       <div class="icon">📤</div>
       <h3>Upload Photos</h3>
-      <p>Upload and manage your personal photos.</p>
+      <p>Click here to select and upload photos.</p>
     </div>
 
-    <div class="dashboard-card">
+    <div class="dashboard-card" onclick="triggerUpload('image/*')">
       <div class="icon">🖼️</div>
       <h3>View Photos</h3>
-      <p>Access your uploaded media collection.</p>
+      <p>Access your uploaded photo collection.</p>
     </div>
 
-    <div class="dashboard-card">
+    <div class="dashboard-card" onclick="triggerUpload('video/*')">
       <div class="icon">🎥</div>
-      <h3>Videos</h3>
-      <p>Manage your personal video content.</p>
+      <h3>Upload Videos</h3>
+      <p>Click here to select and upload videos.</p>
     </div>
 
     <div class="dashboard-card">
       <div class="icon">🔐</div>
       <h3>Account</h3>
-      <p>Your Firebase account is securely connected.</p>
+      <p>Your Firebase account is connected.</p>
     </div>
   </div>
 
+  <div id="uploadStatus" class="upload-status hidden"></div>
+
+  <h3 style="margin-top: 30px;">Your Media Files</h3>
+  <div id="gallery" class="gallery"></div>
+
   <div id="adminPanel" class="admin-panel hidden">
     <h2>🛡️ Admin Panel</h2>
-    <p>You are logged in with the administrator account. Admin-only features can be added here later.</p>
+    <p>You are logged in with the administrator account.</p>
     <div class="status">✅ Administrator authentication verified.</div>
   </div>
 </div>
@@ -631,6 +635,13 @@ import {
   signOut,
   updateProfile
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+import {
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+  listAll
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBThHvIP2jeMllwcGuzo2HYIZiQFvL5Vu0",
@@ -645,8 +656,10 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const storage = getStorage(app);
 
 const ADMIN_EMAIL = "vikramrazz785884716@gmail.com";
+let currentUser = null;
 
 const authPage = document.getElementById("authPage");
 const dashboardPage = document.getElementById("dashboardPage");
@@ -657,8 +670,10 @@ const signupTab = document.getElementById("signupTab");
 const title = document.getElementById("title");
 const subtitle = document.getElementById("subtitle");
 const message = document.getElementById("message");
+const mediaInput = document.getElementById("mediaInput");
+const uploadStatus = document.getElementById("uploadStatus");
+const gallery = document.getElementById("gallery");
 
-// FRIENDLY ERRORS
 function friendlyError(code) {
   switch (code) {
     case 'auth/user-not-found':
@@ -667,16 +682,11 @@ function friendlyError(code) {
       return 'Invalid email or password.';
     case 'auth/email-already-in-use':
       return 'An account with this email already exists.';
-    case 'auth/invalid-email':
-      return 'Invalid email address format.';
-    case 'auth/weak-password':
-      return 'Password should be at least 6 characters.';
     default:
       return 'An error occurred. Please try again.';
   }
 }
 
-// UI HELPERS
 window.showMessage = function(text, type = "error") {
   message.textContent = text;
   message.className = "message show " + type;
@@ -704,18 +714,73 @@ window.showSignup = function() {
 
 window.togglePassword = function(id, button) {
   const input = document.getElementById(id);
-  if (input.type === "password") {
-    input.type = "text";
-    button.textContent = "Hide";
-  } else {
-    input.type = "password";
-    button.textContent = "Show";
-  }
+  input.type = input.type === "password" ? "text" : "password";
+  button.textContent = input.type === "password" ? "Show" : "Hide";
 };
 
-// AUTH STATE OBSERVER
+// UPLOAD FUNCTIONALITY
+window.triggerUpload = function(acceptType) {
+  mediaInput.accept = acceptType;
+  mediaInput.click();
+};
+
+mediaInput.addEventListener("change", async (e) => {
+  const files = e.target.files;
+  if (!files || files.length === 0 || !currentUser) return;
+
+  uploadStatus.classList.remove("hidden");
+
+  for (let file of files) {
+    const storageRef = ref(storage, `users/${currentUser.uid}/${Date.now()}_${file.name}`);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+
+    uploadTask.on("state_changed",
+      (snapshot) => {
+        const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+        uploadStatus.textContent = `Uploading ${file.name}: ${progress}% complete`;
+      },
+      (error) => {
+        console.error("Upload error:", error);
+        uploadStatus.textContent = `Error uploading ${file.name}`;
+      },
+      async () => {
+        uploadStatus.textContent = `${file.name} uploaded successfully!`;
+        const url = await getDownloadURL(uploadTask.snapshot.ref);
+        renderMediaItem(url, file.type);
+      }
+    );
+  }
+});
+
+function renderMediaItem(url, type) {
+  const item = document.createElement("div");
+  item.className = "media-item";
+  if (type && type.startsWith("video")) {
+    item.innerHTML = `<video src="${url}" controls></video>`;
+  } else {
+    item.innerHTML = `<img src="${url}" alt="Uploaded media">`;
+  }
+  gallery.appendChild(item);
+}
+
+async function loadUserMedia(user) {
+  gallery.innerHTML = "";
+  const listRef = ref(storage, `users/${user.uid}`);
+  try {
+    const res = await listAll(listRef);
+    for (let itemRef of res.items) {
+      const url = await getDownloadURL(itemRef);
+      renderMediaItem(url, itemRef.name.endsWith(".mp4") ? "video/mp4" : "image/jpeg");
+    }
+  } catch (err) {
+    console.log("No media found or storage empty.");
+  }
+}
+
+// AUTH OBSERVER
 onAuthStateChanged(auth, (user) => {
   if (user) {
+    currentUser = user;
     authPage.classList.add("hidden");
     dashboardPage.classList.remove("hidden");
 
@@ -729,13 +794,15 @@ onAuthStateChanged(auth, (user) => {
       document.getElementById("adminBadge").classList.add("hidden");
       document.getElementById("adminPanel").classList.add("hidden");
     }
+
+    loadUserMedia(user);
   } else {
+    currentUser = null;
     authPage.classList.remove("hidden");
     dashboardPage.classList.add("hidden");
   }
 });
 
-// LOGIN ACTION
 loginForm.addEventListener("submit", async function(event) {
   event.preventDefault();
   const email = document.getElementById("loginEmail").value.trim();
@@ -745,12 +812,8 @@ loginForm.addEventListener("submit", async function(event) {
   try {
     button.disabled = true;
     button.textContent = "Signing in...";
-    showMessage("Checking your account...", "success");
-
     await signInWithEmailAndPassword(auth, email, password);
-    showMessage("Login successful!", "success");
   } catch (error) {
-    console.error("LOGIN ERROR:", error);
     showMessage(friendlyError(error.code), "error");
   } finally {
     button.disabled = false;
@@ -758,7 +821,6 @@ loginForm.addEventListener("submit", async function(event) {
   }
 });
 
-// SIGN UP ACTION
 signupForm.addEventListener("submit", async function(event) {
   event.preventDefault();
   const name = document.getElementById("signupName").value.trim();
@@ -772,59 +834,6 @@ signupForm.addEventListener("submit", async function(event) {
     return;
   }
 
-  if (password.length < 6) {
-    showMessage("Password must contain at least 6 characters.", "error");
-    return;
-  }
-
   try {
     button.disabled = true;
-    button.textContent = "Creating...";
-    showMessage("Creating your account...", "success");
-
-    const credential = await createUserWithEmailAndPassword(auth, email, password);
-
-    if (name) {
-      await updateProfile(credential.user, { displayName: name });
-    }
-
-    showMessage("Account created successfully!", "success");
-  } catch (error) {
-    console.error("SIGNUP ERROR:", error);
-    showMessage(friendlyError(error.code), "error");
-  } finally {
-    button.disabled = false;
-    button.textContent = "Create Account";
-  }
-});
-
-// FORGOT PASSWORD
-window.forgotPassword = async function() {
-  const email = document.getElementById("loginEmail").value.trim();
-  if (!email) {
-    showMessage("Please enter your email address first.", "error");
-    return;
-  }
-
-  try {
-    await sendPasswordResetEmail(auth, email);
-    showMessage("Password reset email sent! Check your inbox.", "success");
-  } catch (error) {
-    console.error("RESET ERROR:", error);
-    showMessage(friendlyError(error.code), "error");
-  }
-};
-
-// LOGOUT ACTION
-window.logout = async function() {
-  try {
-    await signOut(auth);
-  } catch (error) {
-    console.error("LOGOUT ERROR:", error);
-  }
-};
-</script>
-
-</body>
-  </html>
-  
+    c
