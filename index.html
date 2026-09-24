@@ -1189,4 +1189,629 @@
      PASSWORD SHOW/HIDE
   ======================================================== */
 
-  window.toggle
+  window.togglePassword =
+    function(id, button) {
+
+      const input =
+        document.getElementById(id);
+
+      if (input.type === "password") {
+
+        input.type = "text";
+
+        button.textContent =
+          "Hide";
+
+      } else {
+
+        input.type = "password";
+
+        button.textContent =
+          "Show";
+
+      }
+
+    };
+
+
+  /* ========================================================
+     LOGIN
+  ======================================================== */
+
+  loginForm.addEventListener(
+    "submit",
+    async function(event) {
+
+      event.preventDefault();
+
+
+      const email =
+        document
+          .getElementById("loginEmail")
+          .value
+          .trim()
+          .toLowerCase();
+
+
+      const password =
+        document
+          .getElementById("loginPassword")
+          .value;
+
+
+      if (!email || !password) {
+
+        showMessage(
+          "Please enter email and password.",
+          "error"
+        );
+
+        return;
+
+      }
+
+
+      try {
+
+        loginButton.disabled = true;
+
+        loginButton.innerHTML =
+          '<span class="spinner"></span>Signing in...';
+
+
+        showMessage(
+          "Checking your account...",
+          "info"
+        );
+
+
+        /* -----------------------------------------------
+           FIREBASE LOGIN
+        ------------------------------------------------ */
+
+        const credential =
+          await signInWithEmailAndPassword(
+            auth,
+            email,
+            password
+          );
+
+
+        const user =
+          credential.user;
+
+
+        /* -----------------------------------------------
+           TRY TO LOAD USER PROFILE
+           
+           Login itself does NOT depend on Firestore.
+           This prevents Firestore rules from breaking
+           normal Firebase authentication.
+        ------------------------------------------------ */
+
+        let role = "user";
+
+
+        try {
+
+          const userRef =
+            doc(
+              db,
+              "users",
+              user.uid
+            );
+
+
+          const userSnap =
+            await getDoc(userRef);
+
+
+          if (userSnap.exists()) {
+
+            const data =
+              userSnap.data();
+
+
+            if (data.role) {
+
+              role =
+                String(data.role)
+                  .toLowerCase();
+
+            }
+
+          }
+
+        } catch (firestoreError) {
+
+          console.warn(
+            "Firestore profile could not be read:",
+            firestoreError
+          );
+
+        }
+
+
+        /* -----------------------------------------------
+           ADMIN ROUTING
+        ------------------------------------------------ */
+
+        if (
+          role === "admin" ||
+          user.email.toLowerCase() === ADMIN_EMAIL
+        ) {
+
+          showMessage(
+            "Admin login successful. Opening admin panel...",
+            "success"
+          );
+
+
+          setTimeout(
+            function() {
+
+              window.location.href =
+                "admin.html";
+
+            },
+            600
+          );
+
+
+          return;
+
+        }
+
+
+        /* -----------------------------------------------
+           NORMAL USER
+        ------------------------------------------------ */
+
+        showMessage(
+          "Login successful. Opening dashboard...",
+          "success"
+        );
+
+
+        setTimeout(
+          function() {
+
+            window.location.href =
+              "dashboard.html";
+
+          },
+          600
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          "Login error:",
+          error
+        );
+
+
+        showMessage(
+          friendlyError(error.code),
+          "error"
+        );
+
+
+      } finally {
+
+        loginButton.disabled = false;
+
+        loginButton.textContent =
+          "Sign In";
+
+      }
+
+    }
+  );
+
+
+  /* ========================================================
+     SIGN UP
+  ======================================================== */
+
+  signupForm.addEventListener(
+    "submit",
+    async function(event) {
+
+      event.preventDefault();
+
+
+      const name =
+        document
+          .getElementById("signupName")
+          .value
+          .trim();
+
+
+      const email =
+        document
+          .getElementById("signupEmail")
+          .value
+          .trim()
+          .toLowerCase();
+
+
+      const password =
+        document
+          .getElementById("signupPassword")
+          .value;
+
+
+      const confirmPassword =
+        document
+          .getElementById("signupConfirm")
+          .value;
+
+
+      /* -----------------------------------------------
+         VALIDATION
+      ------------------------------------------------ */
+
+      if (name.length < 2) {
+
+        showMessage(
+          "Please enter your full name.",
+          "error"
+        );
+
+        return;
+
+      }
+
+
+      if (password.length < 6) {
+
+        showMessage(
+          "Password must be at least 6 characters.",
+          "error"
+        );
+
+        return;
+
+      }
+
+
+      if (password !== confirmPassword) {
+
+        showMessage(
+          "Passwords do not match.",
+          "error"
+        );
+
+        return;
+
+      }
+
+
+      try {
+
+        signupButton.disabled = true;
+
+        signupButton.innerHTML =
+          '<span class="spinner"></span>Creating...';
+
+
+        showMessage(
+          "Creating your account...",
+          "info"
+        );
+
+
+        /* -----------------------------------------------
+           CREATE FIREBASE AUTH ACCOUNT
+        ------------------------------------------------ */
+
+        const credential =
+          await createUserWithEmailAndPassword(
+            auth,
+            email,
+            password
+          );
+
+
+        const user =
+          credential.user;
+
+
+        /* -----------------------------------------------
+           SAVE DISPLAY NAME
+        ------------------------------------------------ */
+
+        try {
+
+          await updateProfile(
+            user,
+            {
+              displayName: name
+            }
+          );
+
+        } catch (profileError) {
+
+          console.warn(
+            "Profile name update failed:",
+            profileError
+          );
+
+        }
+
+
+        /* -----------------------------------------------
+           SAVE USER PROFILE
+           
+           IMPORTANT:
+           Every new signup is USER.
+           They cannot create an admin account.
+        ------------------------------------------------ */
+
+        try {
+
+          await setDoc(
+            doc(
+              db,
+              "users",
+              user.uid
+            ),
+            {
+
+              uid:
+                user.uid,
+
+              name:
+                name,
+
+              email:
+                email,
+
+              role:
+                "user",
+
+              createdAt:
+                new Date().toISOString()
+
+            },
+            {
+              merge: true
+            }
+          );
+
+        } catch (firestoreError) {
+
+          console.warn(
+            "User profile save failed:",
+            firestoreError
+          );
+
+        }
+
+
+        /* -----------------------------------------------
+           SUCCESS
+        ------------------------------------------------ */
+
+        showMessage(
+          "Account created successfully!",
+          "success"
+        );
+
+
+        setTimeout(
+          function() {
+
+            window.location.href =
+              "dashboard.html";
+
+          },
+          800
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          "Signup error:",
+          error
+        );
+
+
+        showMessage(
+          friendlyError(error.code),
+          "error"
+        );
+
+
+      } finally {
+
+        signupButton.disabled = false;
+
+        signupButton.textContent =
+          "Create Account";
+
+      }
+
+    }
+  );
+
+
+  /* ========================================================
+     FORGOT PASSWORD
+  ======================================================== */
+
+  window.forgotPassword =
+    async function() {
+
+      const email =
+        document
+          .getElementById("loginEmail")
+          .value
+          .trim()
+          .toLowerCase();
+
+
+      if (!email) {
+
+        showMessage(
+          "Enter your email address first.",
+          "error"
+        );
+
+        document
+          .getElementById("loginEmail")
+          .focus();
+
+        return;
+
+      }
+
+
+      try {
+
+        showMessage(
+          "Sending password reset email...",
+          "info"
+        );
+
+
+        await sendPasswordResetEmail(
+          auth,
+          email
+        );
+
+
+        showMessage(
+          "Password reset email sent. Please check your inbox.",
+          "success"
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          "Password reset error:",
+          error
+        );
+
+
+        showMessage(
+          friendlyError(error.code),
+          "error"
+        );
+
+      }
+
+    };
+
+
+  /* ========================================================
+     FIREBASE ERROR HANDLER
+  ======================================================== */
+
+  function friendlyError(code) {
+
+    switch (code) {
+
+      case "auth/invalid-email":
+
+        return "Please enter a valid email address.";
+
+
+      case "auth/invalid-credential":
+
+        return "Email or password is incorrect.";
+
+
+      case "auth/user-not-found":
+
+        return "No account was found with this email.";
+
+
+      case "auth/wrong-password":
+
+        return "Email or password is incorrect.";
+
+
+      case "auth/email-already-in-use":
+
+        return "This email is already registered. Please login.";
+
+
+      case "auth/weak-password":
+
+        return "Password is too weak. Use at least 6 characters.";
+
+
+      case "auth/password-does-not-meet-requirements":
+
+        return "Password does not meet Firebase password requirements.";
+
+
+      case "auth/too-many-requests":
+
+        return "Too many attempts. Please wait and try again.";
+
+
+      case "auth/network-request-failed":
+
+        return "Network error. Check your internet connection.";
+
+
+      case "auth/operation-not-allowed":
+
+        return "Email/Password login is not enabled in Firebase Authentication.";
+
+
+      case "auth/user-disabled":
+
+        return "This account has been disabled.";
+
+
+      case "auth/invalid-api-key":
+
+        return "Firebase API key is invalid. Check Firebase configuration.";
+
+
+      case "auth/app-not-authorized":
+
+        return "This website is not authorized in Firebase. Check Authorized Domains.";
+
+
+      case "auth/internal-error":
+
+        return "Firebase internal error. Please try again.";
+
+
+      default:
+
+        return (
+          "Something went wrong. " +
+          "Please check Firebase settings and try again."
+        );
+
+    }
+
+  }
+
+
+  /* ========================================================
+     STARTUP CHECK
+  ======================================================== */
+
+  console.log(
+    "Vikram Media Portal Firebase initialized successfully."
+  );
+
+  console.log(
+    "Firebase Project:",
+    firebaseConfig.projectId
+  );
+
+</script>
+
+</body>
+</html>
