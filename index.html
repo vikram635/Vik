@@ -464,474 +464,164 @@ input:focus{
 ========================= */
 
 @media(max-width:800px){
-
-  body{
-    padding:10px;
-  }
-
-  .container{
-    grid-template-columns:1fr;
-    min-height:auto;
-    border-radius:22px;
-  }
-
-  .hero{
-    padding:35px 25px;
-  }
-
-  .hero h1{
-    font-size:42px;
-  }
-
-  .features{
-    margin-top:22px;
-  }
-
-  .auth{
-    padding:30px 22px 35px;
-  }
-
-  .cards{
-    grid-template-columns:1fr 1fr;
-  }
-
-  .dashboard{
-    min-height:calc(100vh - 20px);
-    padding:18px;
-  }
+  body{ padding:10px; }
+  .container{ grid-template-columns:1fr; min-height:auto; border-radius:22px; }
+  .hero{ padding:35px 25px; }
+  .hero h1{ font-size:42px; }
+  .features{ margin-top:22px; }
+  .auth{ padding:30px 22px 35px; }
+  .cards{ grid-template-columns:1fr 1fr; }
+  .dashboard{ min-height:calc(100vh - 20px); padding:18px; }
 }
 
 @media(max-width:480px){
-
-  .cards{
-    grid-template-columns:1fr;
-  }
-
-  .topbar{
-    align-items:flex-start;
-  }
-
-  .brand h2{
-    font-size:17px;
-  }
-
-  .logout{
-    padding:9px 12px;
-  }
+  .cards{ grid-template-columns:1fr; }
+  .topbar{ align-items:flex-start; }
+  .brand h2{ font-size:17px; }
+  .logout{ padding:9px 12px; }
 }
 </style>
 </head>
 
 <body>
 
-<!-- =========================
-     LOGIN / SIGNUP PAGE
-========================= -->
-
+<!-- LOGIN / SIGNUP PAGE -->
 <div id="authPage" class="container">
 
-  <!-- HERO -->
-
   <section class="hero">
-
     <div class="logo">V</div>
-
-    <h1>
-      Vikram<br>
-      <span class="gradient">Media Portal</span>
-    </h1>
-
-    <p>
-      Your secure space for managing photos, videos and personal media.
-      Sign in to access your dashboard.
-    </p>
-
+    <h1>Vikram<br><span class="gradient">Media Portal</span></h1>
+    <p>Your secure space for managing photos, videos and personal media. Sign in to access your dashboard.</p>
     <div class="features">
-
-      <div class="feature">
-        <span>🔐</span>
-        Secure account access
-      </div>
-
-      <div class="feature">
-        <span>📸</span>
-        Photo management
-      </div>
-
-      <div class="feature">
-        <span>🎥</span>
-        Video management
-      </div>
-
-      <div class="feature">
-        <span>👤</span>
-        Personal dashboard
-      </div>
-
+      <div class="feature"><span>🔐</span> Secure account access</div>
+      <div class="feature"><span>📸</span> Photo management</div>
+      <div class="feature"><span>🎥</span> Video management</div>
+      <div class="feature"><span>👤</span> Personal dashboard</div>
     </div>
-
   </section>
 
-  <!-- AUTH -->
-
   <section class="auth">
-
     <div class="card">
-
       <h2 id="title">Welcome back</h2>
-
-      <p class="subtitle" id="subtitle">
-        Sign in to continue to your portal.
-      </p>
+      <p class="subtitle" id="subtitle">Sign in to continue to your portal.</p>
 
       <div class="tabs">
-
-        <button
-          id="loginTab"
-          class="active"
-          type="button"
-          onclick="showLogin()">
-          Login
-        </button>
-
-        <button
-          id="signupTab"
-          type="button"
-          onclick="showSignup()">
-          Sign Up
-        </button>
-
+        <button id="loginTab" class="active" type="button" onclick="showLogin()">Login</button>
+        <button id="signupTab" type="button" onclick="showSignup()">Sign Up</button>
       </div>
 
       <div id="message" class="message"></div>
 
-
       <!-- LOGIN FORM -->
-
       <form id="loginForm">
-
         <div class="input-group">
-
           <label>Email address</label>
-
-          <input
-            id="loginEmail"
-            type="email"
-            placeholder="you@example.com"
-            autocomplete="email"
-            required>
-
+          <input id="loginEmail" type="email" placeholder="you@example.com" autocomplete="email" required>
         </div>
-
 
         <div class="input-group">
-
           <label>Password</label>
-
           <div class="password-wrap">
-
-            <input
-              id="loginPassword"
-              type="password"
-              placeholder="Enter your password"
-              autocomplete="current-password"
-              required>
-
-            <button
-              type="button"
-              class="show-pass"
-              onclick="togglePassword('loginPassword',this)">
-              Show
-            </button>
-
+            <input id="loginPassword" type="password" placeholder="Enter your password" autocomplete="current-password" required>
+            <button type="button" class="show-pass" onclick="togglePassword('loginPassword',this)">Show</button>
           </div>
-
         </div>
 
-
-        <span
-          class="forgot"
-          onclick="forgotPassword()">
-          Forgot password?
-        </span>
-
-
-        <button
-          id="loginBtn"
-          class="main-btn"
-          type="submit">
-          Sign In
-        </button>
-
+        <span class="forgot" onclick="forgotPassword()">Forgot password?</span>
+        <button id="loginBtn" class="main-btn" type="submit">Sign In</button>
       </form>
-
 
       <!-- SIGNUP FORM -->
-
-      <form
-        id="signupForm"
-        class="hidden">
-
+      <form id="signupForm" class="hidden">
         <div class="input-group">
-
           <label>Full name</label>
-
-          <input
-            id="signupName"
-            type="text"
-            placeholder="Your name"
-            autocomplete="name"
-            required>
-
+          <input id="signupName" type="text" placeholder="Your name" autocomplete="name" required>
         </div>
 
-
         <div class="input-group">
-
           <label>Email address</label>
-
-          <input
-            id="signupEmail"
-            type="email"
-            placeholder="you@example.com"
-            autocomplete="email"
-            required>
-
+          <input id="signupEmail" type="email" placeholder="you@example.com" autocomplete="email" required>
         </div>
 
-
         <div class="input-group">
-
           <label>Password</label>
-
           <div class="password-wrap">
-
-            <input
-              id="signupPassword"
-              type="password"
-              placeholder="Minimum 6 characters"
-              autocomplete="new-password"
-              minlength="6"
-              required>
-
-            <button
-              type="button"
-              class="show-pass"
-              onclick="togglePassword('signupPassword',this)">
-              Show
-            </button>
-
+            <input id="signupPassword" type="password" placeholder="Minimum 6 characters" autocomplete="new-password" minlength="6" required>
+            <button type="button" class="show-pass" onclick="togglePassword('signupPassword',this)">Show</button>
           </div>
-
         </div>
-
 
         <div class="input-group">
-
           <label>Confirm password</label>
-
           <div class="password-wrap">
-
-            <input
-              id="signupConfirm"
-              type="password"
-              placeholder="Repeat password"
-              autocomplete="new-password"
-              minlength="6"
-              required>
-
-            <button
-              type="button"
-              class="show-pass"
-              onclick="togglePassword('signupConfirm',this)">
-              Show
-            </button>
-
+            <input id="signupConfirm" type="password" placeholder="Repeat password" autocomplete="new-password" minlength="6" required>
+            <button type="button" class="show-pass" onclick="togglePassword('signupConfirm',this)">Show</button>
           </div>
-
         </div>
 
-
-        <button
-          id="signupBtn"
-          class="main-btn"
-          type="submit">
-          Create Account
-        </button>
-
+        <button id="signupBtn" class="main-btn" type="submit">Create Account</button>
       </form>
 
-
-      <div class="footer">
-        © 2026 Vikram Media Portal
-      </div>
-
+      <div class="footer">© 2026 Vikram Media Portal</div>
     </div>
-
   </section>
-
 </div>
 
-
-<!-- =========================
-     DASHBOARD
-========================= -->
-
+<!-- DASHBOARD -->
 <div id="dashboardPage" class="dashboard hidden">
-
   <div class="topbar">
-
     <div class="brand">
-
-      <div class="brand-logo">
-        V
-      </div>
-
+      <div class="brand-logo">V</div>
       <div>
-
         <h2>Vikram Media Portal</h2>
-
-        <small id="userEmail">
-          Loading...
-        </small>
-
+        <small id="userEmail">Loading...</small>
       </div>
-
     </div>
-
-
-    <button
-      class="logout"
-      onclick="logout()">
-      Sign Out
-    </button>
-
+    <button class="logout" onclick="logout()">Sign Out</button>
   </div>
-
 
   <div class="welcome">
-
-    <h1>
-      Welcome, <span id="userName">User</span> 👋
-    </h1>
-
-    <p>
-      Your media dashboard is ready.
-    </p>
-
-    <span
-      id="adminBadge"
-      class="admin-badge hidden">
-      ADMIN ACCOUNT
-    </span>
-
+    <h1>Welcome, <span id="userName">User</span> 👋</h1>
+    <p>Your media dashboard is ready.</p>
+    <span id="adminBadge" class="admin-badge hidden">ADMIN ACCOUNT</span>
   </div>
-
 
   <div class="cards">
-
     <div class="dashboard-card">
-
-      <div class="icon">
-        📤
-      </div>
-
-      <h3>
-        Upload Photos
-      </h3>
-
-      <p>
-        Upload and manage your personal photos.
-      </p>
-
+      <div class="icon">📤</div>
+      <h3>Upload Photos</h3>
+      <p>Upload and manage your personal photos.</p>
     </div>
 
-
     <div class="dashboard-card">
-
-      <div class="icon">
-        🖼️
-      </div>
-
-      <h3>
-        View Photos
-      </h3>
-
-      <p>
-        Access your uploaded media collection.
-      </p>
-
+      <div class="icon">🖼️</div>
+      <h3>View Photos</h3>
+      <p>Access your uploaded media collection.</p>
     </div>
 
-
     <div class="dashboard-card">
-
-      <div class="icon">
-        🎥
-      </div>
-
-      <h3>
-        Videos
-      </h3>
-
-      <p>
-        Manage your personal video content.
-      </p>
-
+      <div class="icon">🎥</div>
+      <h3>Videos</h3>
+      <p>Manage your personal video content.</p>
     </div>
 
-
     <div class="dashboard-card">
-
-      <div class="icon">
-        🔐
-      </div>
-
-      <h3>
-        Account
-      </h3>
-
-      <p>
-        Your Firebase account is securely connected.
-      </p>
-
+      <div class="icon">🔐</div>
+      <h3>Account</h3>
+      <p>Your Firebase account is securely connected.</p>
     </div>
-
   </div>
 
-
-  <div
-    id="adminPanel"
-    class="admin-panel hidden">
-
-    <h2>
-      🛡️ Admin Panel
-    </h2>
-
-    <p>
-      You are logged in with the administrator account.
-      Admin-only features can be added here later.
-    </p>
-
-    <div class="status">
-      ✅ Administrator authentication verified.
-    </div>
-
+  <div id="adminPanel" class="admin-panel hidden">
+    <h2>🛡️ Admin Panel</h2>
+    <p>You are logged in with the administrator account. Admin-only features can be added here later.</p>
+    <div class="status">✅ Administrator authentication verified.</div>
   </div>
-
 </div>
 
-
-<!-- =========================
-     FIREBASE
-========================= -->
-
+<!-- FIREBASE SCRIPT -->
 <script type="module">
-
-import {
-  initializeApp
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
 import {
   getAuth,
   onAuthStateChanged,
@@ -942,639 +632,199 @@ import {
   updateProfile
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
-
-/* ==========================================
-   YOUR FIREBASE WEB CONFIG
-========================================== */
-
 const firebaseConfig = {
-
-  apiKey:
-    "AIzaSyBThHvIP2jeMllwcGuzo2HYIZiQFvL5Vu0",
-
-  authDomain:
-    "vikram-media-portal.firebaseapp.com",
-
-  databaseURL:
-    "https://vikram-media-portal-default-rtdb.firebaseio.com",
-
-  projectId:
-    "vikram-media-portal",
-
-  storageBucket:
-    "vikram-media-portal.firebasestorage.app",
-
-  messagingSenderId:
-    "306957159390",
-
-  appId:
-    "1:306957159390:web:44ce695630e0d3039deb4f",
-
-  measurementId:
-    "G-8KEMQDE4V7"
-
+  apiKey: "AIzaSyBThHvIP2jeMllwcGuzo2HYIZiQFvL5Vu0",
+  authDomain: "vikram-media-portal.firebaseapp.com",
+  databaseURL: "https://vikram-media-portal-default-rtdb.firebaseio.com",
+  projectId: "vikram-media-portal",
+  storageBucket: "vikram-media-portal.firebasestorage.app",
+  messagingSenderId: "306957159390",
+  appId: "1:306957159390:web:44ce695630e0d3039deb4f",
+  measurementId: "G-8KEMQDE4V7"
 };
 
-
-/* ==========================================
-   INITIALIZE FIREBASE
-========================================== */
-
-const app =
-  initializeApp(firebaseConfig);
-
-const auth =
-  getAuth(app);
-
-
-/* ==========================================
-   ADMIN EMAIL
-========================================== */
-
-const ADMIN_EMAIL =
-  "vikramrazz785884716@gmail.com";
-
-
-/* ==========================================
-   ELEMENTS
-========================================== */
-
-const authPage =
-  document.getElementById("authPage");
-
-const dashboardPage =
-  document.getElementById("dashboardPage");
-
-const loginForm =
-  document.getElementById("loginForm");
-
-const signupForm =
-  document.getElementById("signupForm");
-
-const loginTab =
-  document.getElementById("loginTab");
-
-const signupTab =
-  document.getElementById("signupTab");
-
-const title =
-  document.getElementById("title");
-
-const subtitle =
-  document.getElementById("subtitle");
-
-const message =
-  document.getElementById("message");
-
-
-/* ==========================================
-   MESSAGE
-========================================== */
-
-window.showMessage =
-function(text,type="error"){
-
-  message.textContent = text;
-
-  message.className =
-    "message show " + type;
-
-};
-
-
-/* ==========================================
-   LOGIN TAB
-========================================== */
-
-window.showLogin =
-function(){
-
-  loginForm.classList.remove("hidden");
-
-  signupForm.classList.add("hidden");
-
-  loginTab.classList.add("active");
-
-  signupTab.classList.remove("active");
-
-  title.textContent =
-    "Welcome back";
-
-  subtitle.textContent =
-    "Sign in to continue to your portal.";
-
-  message.className =
-    "message";
-
-};
-
-
-/* ==========================================
-   SIGNUP TAB
-========================================== */
-
-window.showSignup =
-function(){
-
-  signupForm.classList.remove("hidden");
-
-  loginForm.classList.add("hidden");
-
-  signupTab.classList.add("active");
-
-  loginTab.classList.remove("active");
-
-  title.textContent =
-    "Create account";
-
-  subtitle.textContent =
-    "Create your secure Vikram Media account.";
-
-  message.className =
-    "message";
-
-};
-
-
-/* ==========================================
-   SHOW / HIDE PASSWORD
-========================================== */
-
-window.togglePassword =
-function(id,button){
-
-  const input =
-    document.getElementById(id);
-
-  if(input.type === "password"){
-
-    input.type = "text";
-
-    button.textContent = "Hide";
-
-  }else{
-
-    input.type = "password";
-
-    button.textContent = "Show";
-
-  }
-
-};
-
-
-/* ==========================================
-   LOGIN
-========================================== */
-
-loginForm.addEventListener(
-  "submit",
-  async function(event){
-
-    event.preventDefault();
-
-    const email =
-      document.getElementById("loginEmail")
-      .value
-      .trim();
-
-    const password =
-      document.getElementById("loginPassword")
-      .value;
-
-    const button =
-      document.getElementById("loginBtn");
-
-    try{
-
-      button.disabled = true;
-
-      button.textContent =
-        "Signing in...";
-
-      showMessage(
-        "Checking your account...",
-        "success"
-      );
-
-
-      await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-
-
-      showMessage(
-        "Login successful!",
-        "success"
-      );
-
-
-    }catch(error){
-
-      console.error(
-        "LOGIN ERROR:",
-        error
-      );
-
-      showMessage(
-        friendlyError(error.code),
-        "error"
-      );
-
-      button.disabled = false;
-
-      button.textContent =
-        "Sign In";
-
-    }
-
-  }
-);
-
-
-/* ==========================================
-   SIGN UP
-========================================== */
-
-signupForm.addEventListener(
-  "submit",
-  async function(event){
-
-    event.preventDefault();
-
-    const name =
-      document.getElementById("signupName")
-      .value
-      .trim();
-
-    const email =
-      document.getElementById("signupEmail")
-      .value
-      .trim();
-
-    const password =
-      document.getElementById("signupPassword")
-      .value;
-
-    const confirm =
-      document.getElementById("signupConfirm")
-      .value;
-
-    const button =
-      document.getElementById("signupBtn");
-
-
-    if(password !== confirm){
-
-      showMessage(
-        "Passwords do not match.",
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    if(password.length < 6){
-
-      showMessage(
-        "Password must contain at least 6 characters.",
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    try{
-
-      button.disabled = true;
-
-      button.textContent =
-        "Creating...";
-
-      showMessage(
-        "Creating your account...",
-        "success"
-      );
-
-
-      const credential =
-        await createUserWithEmailAndPassword(
-          auth,
-          email,
-          password
-        );
-
-
-      /* Save user's display name */
-
-      if(name){
-
-        await updateProfile(
-          credential.user,
-          {
-            displayName:name
-          }
-        );
-
-      }
-
-
-      showMessage(
-        "Account created successfully!",
-        "success"
-      );
-
-
-    }catch(error){
-
-      console.error(
-        "SIGNUP ERROR:",
-        error
-      );
-
-      showMessage(
-        friendlyError(error.code),
-        "error"
-      );
-
-      button.disabled = false;
-
-      button.textContent =
-        "Create Account";
-
-    }
-
-  }
-);
-
-
-/* ==========================================
-   FORGOT PASSWORD
-========================================== */
-
-window.forgotPassword =
-async function(){
-
-  const email =
-    document.getElementById("loginEmail")
-    .value
-    .trim();
-
-
-  if(!email){
-
-    showMessage(
-      "Enter your email address first.",
-      "error"
-    );
-
-    document
-      .getElementById("loginEmail")
-      .focus();
-
-    return;
-
-  }
-
-
-  try{
-
-    showMessage(
-      "Sending password reset email...",
-      "success"
-    );
-
-
-    await sendPasswordResetEmail(
-      auth,
-      email
-    );
-
-
-    showMessage(
-      "Password reset email sent. Check your inbox.",
-      "success"
-    );
-
-
-  }catch(error){
-
-    console.error(
-      "RESET ERROR:",
-      error
-    );
-
-    showMessage(
-      friendlyError(error.code),
-      "error"
-    );
-
-  }
-
-};
-
-
-/* ==========================================
-   AUTH STATE
-========================================== */
-
-onAuthStateChanged(
-  auth,
-  function(user){
-
-    if(user){
-
-      showDashboard(user);
-
-    }else{
-
-      showAuth();
-
-    }
-
-  }
-);
-
-
-/* ==========================================
-   SHOW DASHBOARD
-========================================== */
-
-function showDashboard(user){
-
-  authPage.classList.add("hidden");
-
-  dashboardPage.classList.remove("hidden");
-
-
-  const email =
-    user.email || "";
-
-  const name =
-    user.displayName ||
-    email.split("@")[0] ||
-    "User";
-
-
-  document.getElementById(
-    "userEmail"
-  ).textContent = email;
-
-
-  document.getElementById(
-    "userName"
-  ).textContent = name;
-
-
-  /* ADMIN CHECK */
-
-  if(
-    email.toLowerCase() ===
-    ADMIN_EMAIL.toLowerCase()
-  ){
-
-    document
-      .getElementById("adminBadge")
-      .classList.remove("hidden");
-
-    document
-      .getElementById("adminPanel")
-      .classList.remove("hidden");
-
-  }else{
-
-    document
-      .getElementById("adminBadge")
-      .classList.add("hidden");
-
-    document
-      .getElementById("adminPanel")
-      .classList.add("hidden");
-
-  }
-
-}
-
-
-/* ==========================================
-   SHOW AUTH PAGE
-========================================== */
-
-function showAuth(){
-
-  dashboardPage.classList.add("hidden");
-
-  authPage.classList.remove("hidden");
-
-}
-
-
-/* ==========================================
-   LOGOUT
-========================================== */
-
-window.logout =
-async function(){
-
-  try{
-
-    await signOut(auth);
-
-    showLogin();
-
-  }catch(error){
-
-    console.error(
-      "LOGOUT ERROR:",
-      error
-    );
-
-  }
-
-};
-
-
-/* ==========================================
-   FIREBASE ERROR MESSAGES
-========================================== */
-
-function friendlyError(code){
-
-  switch(code){
-
-    case "auth/invalid-email":
-
-      return "Please enter a valid email address.";
-
-
-    case "auth/invalid-credential":
-
-      return "Email or password is incorrect.";
-
-
-    case "auth/user-not-found":
-
-      return "No account was found with this email.";
-
-
-    case "auth/wrong-password":
-
-      return "Incorrect password.";
-
-
-    case "auth/email-already-in-use":
-
-      return "This email is already registered. Please login.";
-
-
-    case "auth/weak-password":
-
-      return "Password is too weak. Use at least 6 characters.";
-
-
-    case "auth/too-many-requests":
-
-      return "Too many attempts. Please wait and try again.";
-
-
-    case "auth/network-request-failed":
-
-      return "Network error. Check your internet connection.";
-
-
-    case "auth/operation-not-allowed":
-
-      return "Email/Password login is not enabled in Firebase Authentication.";
-
-
-    case "auth/user-disabled":
-
-      return "This account has been disabled.";
-
-
-    case "auth/missing-email":
-
-      return "Please enter your email address.";
-
-
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+const ADMIN_EMAIL = "vikramrazz785884716@gmail.com";
+
+const authPage = document.getElementById("authPage");
+const dashboardPage = document.getElementById("dashboardPage");
+const loginForm = document.getElementById("loginForm");
+const signupForm = document.getElementById("signupForm");
+const loginTab = document.getElementById("loginTab");
+const signupTab = document.getElementById("signupTab");
+const title = document.getElementById("title");
+const subtitle = document.getElementById("subtitle");
+const message = document.getElementById("message");
+
+// FRIENDLY ERRORS
+function friendlyError(code) {
+  switch (code) {
+    case 'auth/user-not-found':
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential':
+      return 'Invalid email or password.';
+    case 'auth/email-already-in-use':
+      return 'An account with this email already exists.';
+    case 'auth/invalid-email':
+      return 'Invalid email address format.';
+    case 'auth/weak-password':
+      return 'Password should be at least 6 characters.';
     default:
-
-      return (
-        "Something went wrong: " +
-        code
-      );
-
+      return 'An error occurred. Please try again.';
   }
-
 }
 
+// UI HELPERS
+window.showMessage = function(text, type = "error") {
+  message.textContent = text;
+  message.className = "message show " + type;
+};
+
+window.showLogin = function() {
+  loginForm.classList.remove("hidden");
+  signupForm.classList.add("hidden");
+  loginTab.classList.add("active");
+  signupTab.classList.remove("active");
+  title.textContent = "Welcome back";
+  subtitle.textContent = "Sign in to continue to your portal.";
+  message.className = "message";
+};
+
+window.showSignup = function() {
+  signupForm.classList.remove("hidden");
+  loginForm.classList.add("hidden");
+  signupTab.classList.add("active");
+  loginTab.classList.remove("active");
+  title.textContent = "Create account";
+  subtitle.textContent = "Create your secure Vikram Media account.";
+  message.className = "message";
+};
+
+window.togglePassword = function(id, button) {
+  const input = document.getElementById(id);
+  if (input.type === "password") {
+    input.type = "text";
+    button.textContent = "Hide";
+  } else {
+    input.type = "password";
+    button.textContent = "Show";
+  }
+};
+
+// AUTH STATE OBSERVER
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    authPage.classList.add("hidden");
+    dashboardPage.classList.remove("hidden");
+
+    document.getElementById("userEmail").textContent = user.email;
+    document.getElementById("userName").textContent = user.displayName || user.email.split('@')[0];
+
+    if (user.email === ADMIN_EMAIL) {
+      document.getElementById("adminBadge").classList.remove("hidden");
+      document.getElementById("adminPanel").classList.remove("hidden");
+    } else {
+      document.getElementById("adminBadge").classList.add("hidden");
+      document.getElementById("adminPanel").classList.add("hidden");
+    }
+  } else {
+    authPage.classList.remove("hidden");
+    dashboardPage.classList.add("hidden");
+  }
+});
+
+// LOGIN ACTION
+loginForm.addEventListener("submit", async function(event) {
+  event.preventDefault();
+  const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPassword").value;
+  const button = document.getElementById("loginBtn");
+
+  try {
+    button.disabled = true;
+    button.textContent = "Signing in...";
+    showMessage("Checking your account...", "success");
+
+    await signInWithEmailAndPassword(auth, email, password);
+    showMessage("Login successful!", "success");
+  } catch (error) {
+    console.error("LOGIN ERROR:", error);
+    showMessage(friendlyError(error.code), "error");
+  } finally {
+    button.disabled = false;
+    button.textContent = "Sign In";
+  }
+});
+
+// SIGN UP ACTION
+signupForm.addEventListener("submit", async function(event) {
+  event.preventDefault();
+  const name = document.getElementById("signupName").value.trim();
+  const email = document.getElementById("signupEmail").value.trim();
+  const password = document.getElementById("signupPassword").value;
+  const confirm = document.getElementById("signupConfirm").value;
+  const button = document.getElementById("signupBtn");
+
+  if (password !== confirm) {
+    showMessage("Passwords do not match.", "error");
+    return;
+  }
+
+  if (password.length < 6) {
+    showMessage("Password must contain at least 6 characters.", "error");
+    return;
+  }
+
+  try {
+    button.disabled = true;
+    button.textContent = "Creating...";
+    showMessage("Creating your account...", "success");
+
+    const credential = await createUserWithEmailAndPassword(auth, email, password);
+
+    if (name) {
+      await updateProfile(credential.user, { displayName: name });
+    }
+
+    showMessage("Account created successfully!", "success");
+  } catch (error) {
+    console.error("SIGNUP ERROR:", error);
+    showMessage(friendlyError(error.code), "error");
+  } finally {
+    button.disabled = false;
+    button.textContent = "Create Account";
+  }
+});
+
+// FORGOT PASSWORD
+window.forgotPassword = async function() {
+  const email = document.getElementById("loginEmail").value.trim();
+  if (!email) {
+    showMessage("Please enter your email address first.", "error");
+    return;
+  }
+
+  try {
+    await sendPasswordResetEmail(auth, email);
+    showMessage("Password reset email sent! Check your inbox.", "success");
+  } catch (error) {
+    console.error("RESET ERROR:", error);
+    showMessage(friendlyError(error.code), "error");
+  }
+};
+
+// LOGOUT ACTION
+window.logout = async function() {
+  try {
+    await signOut(auth);
+  } catch (error) {
+    console.error("LOGOUT ERROR:", error);
+  }
+};
 </script>
 
 </body>
-</html>
+  </html>
+  
