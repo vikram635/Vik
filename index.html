@@ -1,378 +1,277 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Vikram Media Portal</title>
-
-<style>
-*{ box-sizing:border-box; margin:0; padding:0; }
-
-body{
-  min-height:100vh;
-  font-family:Arial,Helvetica,sans-serif;
-  color:#fff;
-  background:
-    radial-gradient(circle at 10% 10%,#5b21b6 0%,transparent 35%),
-    radial-gradient(circle at 90% 90%,#1d4ed8 0%,transparent 35%),
-    #070812;
-  padding:20px;
-}
-
-button,input{ font-family:inherit; }
-button{ cursor:pointer; }
-.hidden{ display:none!important; }
-
-/* CONTAINER */
-.container{
-  width:100%; max-width:1100px; min-height:680px; margin:auto;
-  display:grid; grid-template-columns:1fr 1fr; overflow:hidden;
-  border:1px solid rgba(255,255,255,.15); border-radius:28px;
-  background:rgba(255,255,255,.07); backdrop-filter:blur(25px);
-  box-shadow:0 30px 90px rgba(0,0,0,.5);
-}
-
-.hero{
-  padding:55px; display:flex; flex-direction:column; justify-content:center;
-  background: linear-gradient(145deg, rgba(124,58,237,.40), rgba(37,99,235,.10));
-}
-
-.logo{
-  width:62px; height:62px; border-radius:18px; display:grid; place-items:center;
-  font-size:29px; font-weight:bold; background:linear-gradient(135deg,#7c3aed,#2563eb);
-  box-shadow:0 15px 40px rgba(99,102,241,.4); margin-bottom:28px;
-}
-
-.hero h1{ font-size:clamp(42px,5vw,68px); line-height:1; margin-bottom:22px; }
-.gradient{ background:linear-gradient(90deg, #c4b5fd, #60a5fa, #22d3ee); -webkit-background-clip:text; background-clip:text; color:transparent; }
-.hero p{ color:#c0c6d8; line-height:1.7; max-width:450px; font-size:16px; }
-
-.features{ margin-top:35px; display:grid; gap:14px; }
-.feature{ display:flex; align-items:center; gap:13px; color:#e3e7f2; font-size:15px; }
-.feature span{ width:38px; height:38px; display:grid; place-items:center; border-radius:12px; background:rgba(255,255,255,.08); }
-
-.auth{ padding:45px; display:flex; align-items:center; justify-content:center; }
-.card{ width:100%; max-width:410px; }
-.card h2{ font-size:32px; margin-bottom:8px; }
-.subtitle{ color:#969eb3; margin-bottom:25px; font-size:14px; }
-
-.tabs{ display:flex; gap:5px; padding:5px; border-radius:15px; background:rgba(255,255,255,.06); margin-bottom:22px; }
-.tabs button{ flex:1; border:0; padding:13px; border-radius:11px; color:#9ca3b5; background:transparent; font-weight:700; font-size:15px; }
-.tabs button.active{ color:#fff; background:linear-gradient(135deg,#7c3aed,#2563eb); }
-
-.input-group{ margin-bottom:15px; }
-label{ display:block; margin-bottom:7px; color:#cfd4e2; font-size:13px; }
-input{ width:100%; padding:15px; border:1px solid rgba(255,255,255,.13); border-radius:14px; outline:none; color:#fff; background:rgba(0,0,0,.25); font-size:15px; }
-input::placeholder{ color:#777f92; }
-input:focus{ border-color:#7c3aed; box-shadow:0 0 0 3px rgba(124,58,237,.15); }
-
-.password-wrap{ position:relative; }
-.password-wrap input{ padding-right:65px; }
-.show-pass{ position:absolute; right:12px; top:50%; transform:translateY(-50%); border:0; color:#b5bbca; background:transparent; font-size:13px; }
-.forgot{ display:block; text-align:right; margin:5px 0 18px; color:#a78bfa; cursor:pointer; font-size:13px; }
-
-.main-btn{ width:100%; border:0; padding:16px; border-radius:14px; color:#fff; font-size:15px; font-weight:700; background:linear-gradient(135deg,#7c3aed,#2563eb); box-shadow:0 12px 30px rgba(79,70,229,.25); }
-.main-btn:disabled{ opacity:.6; cursor:not-allowed; }
-
-.message{ display:none; padding:12px; margin-bottom:15px; border-radius:11px; font-size:13px; line-height:1.5; }
-.message.show{ display:block; }
-.success{ background:rgba(34,197,94,.12); color:#86efac; }
-.error{ background:rgba(239,68,68,.12); color:#fca5a5; }
-.footer{ text-align:center; color:#71798e; font-size:12px; margin-top:22px; }
-
-/* DASHBOARD */
-.dashboard{ width:100%; max-width:1100px; margin:auto; min-height:calc(100vh - 40px); padding:25px; border:1px solid rgba(255,255,255,.12); border-radius:25px; background:rgba(255,255,255,.06); backdrop-filter:blur(20px); box-shadow:0 30px 90px rgba(0,0,0,.45); }
-.topbar{ display:flex; justify-content:space-between; align-items:center; gap:15px; margin-bottom:35px; }
-.brand{ display:flex; align-items:center; gap:12px; }
-.brand-logo{ width:48px; height:48px; border-radius:14px; display:grid; place-items:center; font-weight:bold; background:linear-gradient(135deg,#7c3aed,#2563eb); }
-.brand h2{ font-size:20px; }
-.brand small{ display:block; color:#8f96aa; margin-top:3px; }
-.logout{ border:1px solid rgba(255,255,255,.12); border-radius:12px; padding:11px 17px; color:#fff; background:rgba(255,255,255,.07); }
-.welcome{ margin-bottom:30px; }
-.welcome h1{ font-size:clamp(30px,5vw,48px); margin-bottom:8px; }
-.welcome p{ color:#9da5b9; }
-
-.cards{ display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; }
-.dashboard-card{ padding:25px; border:1px solid rgba(255,255,255,.10); border-radius:20px; background:rgba(255,255,255,.06); transition:.2s; cursor:pointer; }
-.dashboard-card:hover{ transform:translateY(-3px); background:rgba(255,255,255,.09); }
-.dashboard-card .icon{ width:48px; height:48px; display:grid; place-items:center; border-radius:14px; background:rgba(255,255,255,.08); font-size:23px; margin-bottom:17px; }
-
-.gallery{ margin-top:30px; display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:15px; }
-.media-item{ background:rgba(0,0,0,.3); border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,.1); }
-.media-item img, .media-item video{ width:100%; height:140px; object-fit:cover; display:block; }
-
-@media(max-width:800px){
-  .container{ grid-template-columns:1fr; }
-  .hero{ padding:35px 25px; }
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VIK4NT.INC Attendance</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .dark .glass {
+            background: rgba(17, 24, 39, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        /* Mobile Touch Optimization */
+        button, a, input, select {
+            touch-action: manipulation;
+        }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1rem); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
 </head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen font-sans antialiased selection:bg-brand-500 selection:text-white pb-20 md:pb-0">
 
-<body>
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full px-4 pointer-events-none"></div>
 
-<div id="authPage" class="container">
-  <section class="hero">
-    <div class="logo">V</div>
-    <h1>Vikram<br><span class="gradient">Media Portal</span></h1>
-    <p>Your secure space for managing photos, videos and personal media.</p>
-    <div class="features">
-      <div class="feature"><span>🔐</span> Secure account access</div>
-      <div class="feature"><span>📸</span> Photo management</div>
-      <div class="feature"><span>🎥</span> Video management</div>
-    </div>
-  </section>
-
-  <section class="auth">
-    <div class="card">
-      <h2 id="title">Welcome back</h2>
-      <p class="subtitle" id="subtitle">Sign in to continue to your portal.</p>
-
-      <div class="tabs">
-        <button id="loginTab" class="active" type="button" onclick="showLogin()">Login</button>
-        <button id="signupTab" type="button" onclick="showSignup()">Sign Up</button>
-      </div>
-
-      <div id="message" class="message"></div>
-
-      <!-- LOGIN -->
-      <form id="loginForm">
-        <div class="input-group">
-          <label>Email address</label>
-          <input id="loginEmail" type="email" placeholder="you@example.com" required>
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm hidden">
+        <div class="glass dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-800">
+            <h3 id="modal-title" class="text-lg font-bold mb-2 text-slate-900 dark:text-white">Confirm Action</h3>
+            <p id="modal-msg" class="text-sm text-slate-600 dark:text-slate-400 mb-6">Are you sure you want to proceed?</p>
+            <div class="flex gap-3">
+                <button id="modal-cancel-btn" onclick="closeModal()" class="flex-1 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition">Cancel</button>
+                <button id="modal-confirm-btn" class="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition">Confirm</button>
+            </div>
         </div>
-        <div class="input-group">
-          <label>Password</label>
-          <div class="password-wrap">
-            <input id="loginPassword" type="password" placeholder="Enter password" required>
-            <button type="button" class="show-pass" onclick="togglePassword('loginPassword',this)">Show</button>
-          </div>
-        </div>
-        <span class="forgot" onclick="forgotPassword()">Forgot password?</span>
-        <button id="loginBtn" class="main-btn" type="submit">Sign In</button>
-      </form>
-
-      <!-- SIGNUP -->
-      <form id="signupForm" class="hidden">
-        <div class="input-group">
-          <label>Full name</label>
-          <input id="signupName" type="text" placeholder="Your name" required>
-        </div>
-        <div class="input-group">
-          <label>Email address</label>
-          <input id="signupEmail" type="email" placeholder="you@example.com" required>
-        </div>
-        <div class="input-group">
-          <label>Password</label>
-          <div class="password-wrap">
-            <input id="signupPassword" type="password" placeholder="Min 6 chars" minlength="6" required>
-            <button type="button" class="show-pass" onclick="togglePassword('signupPassword',this)">Show</button>
-          </div>
-        </div>
-        <button id="signupBtn" class="main-btn" type="submit">Create Account</button>
-      </form>
-
-      <div class="footer">© 2026 Vikram Media Portal</div>
     </div>
-  </section>
-</div>
 
-<!-- DASHBOARD -->
-<div id="dashboardPage" class="dashboard hidden">
-  <div class="topbar">
-    <div class="brand">
-      <div class="brand-logo">V</div>
-      <div>
-        <h2>Vikram Media Portal</h2>
-        <small id="userEmail">Loading...</small>
-      </div>
+    <!-- AUTH LAYOUT (Login/Signup/Reset) -->
+    <div id="auth-container" class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+        <!-- Background Gradient Blobs -->
+        <div class="absolute -top-40 -left-40 w-96 h-96 bg-brand-500/30 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="w-full max-w-md glass dark:bg-slate-900/80 rounded-3xl p-8 shadow-2xl relative z-10 border border-slate-200 dark:border-slate-800">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-600 text-white text-2xl font-black mb-3 shadow-lg shadow-brand-500/30">
+                    V4
+                </div>
+                <h1 class="text-2xl font-extrabold tracking-tight">VIK4NT.INC</h1>
+                <p class="text-xs text-brand-600 dark:text-brand-400 font-semibold tracking-wider uppercase mt-1">Attendance Portal</p>
+            </div>
+
+            <!-- Login View -->
+            <div id="view-login" class="space-y-4">
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Welcome back</h2>
+                <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Email</label>
+                        <input type="email" id="login-email" required class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-transparent focus:border-brand-500 focus:bg-transparent transition outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Password</label>
+                        <input type="password" id="login-password" required class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-transparent focus:border-brand-500 focus:bg-transparent transition outline-none text-sm">
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="button" onclick="switchAuthView('forgot')" class="text-xs text-brand-600 dark:text-brand-400 font-medium hover:underline">Forgot password?</button>
+                    </div>
+                    <button type="submit" id="btn-login" class="w-full py-3.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm shadow-lg shadow-brand-500/25 transition flex items-center justify-center gap-2">
+                        <span>Sign In</span>
+                    </button>
+                </form>
+                <p class="text-xs text-center text-slate-500 mt-6">
+                    Don't have an account? <button onclick="switchAuthView('signup')" class="text-brand-600 dark:text-brand-400 font-semibold hover:underline">Sign up</button>
+                </p>
+            </div>
+
+            <!-- Sign Up View -->
+            <div id="view-signup" class="space-y-4 hidden">
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Create Account</h2>
+                <form id="form-signup" onsubmit="handleSignup(event)" class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Full Name</label>
+                        <input type="text" id="signup-name" required class="w-full px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-transparent focus:border-brand-500 outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Employee ID</label>
+                        <input type="text" id="signup-empid" required placeholder="e.g. EMP-101" class="w-full px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-transparent focus:border-brand-500 outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Email</label>
+                        <input type="email" id="signup-email" required class="w-full px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-transparent focus:border-brand-500 outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Phone Number</label>
+                        <input type="tel" id="signup-phone" required class="w-full px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-transparent focus:border-brand-500 outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Password</label>
+                        <input type="password" id="signup-password" required minlength="6" class="w-full px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-transparent focus:border-brand-500 outline-none text-sm">
+                    </div>
+                    <button type="submit" id="btn-signup" class="w-full py-3.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm shadow-lg shadow-brand-500/25 transition mt-2">Register Account</button>
+                </form>
+                <p class="text-xs text-center text-slate-500">
+                    Already registered? <button onclick="switchAuthView('login')" class="text-brand-600 dark:text-brand-400 font-semibold hover:underline">Sign in</button>
+                </p>
+            </div>
+
+            <!-- Forgot Password View -->
+            <div id="view-forgot" class="space-y-4 hidden">
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Reset Password</h2>
+                <p class="text-xs text-slate-500">Enter your account email to receive a password recovery link.</p>
+                <form id="form-forgot" onsubmit="handleForgot(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Email</label>
+                        <input type="email" id="forgot-email" required class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-transparent focus:border-brand-500 outline-none text-sm">
+                    </div>
+                    <button type="submit" id="btn-forgot" class="w-full py-3.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm shadow-lg transition">Send Password Reset Link</button>
+                </form>
+                <p class="text-xs text-center text-slate-500">
+                    <button onclick="switchAuthView('login')" class="text-brand-600 dark:text-brand-400 font-semibold hover:underline">Back to Login</button>
+                </p>
+            </div>
+        </div>
     </div>
-    <button class="logout" onclick="logout()">Sign Out</button>
-  </div>
 
-  <div class="welcome">
-    <h1>Welcome, <span id="userName">User</span> 👋</h1>
-    <p>Your media dashboard is ready.</p>
-  </div>
+    <!-- MAIN APP WRAPPER (Protected Views) -->
+    <div id="app-container" class="hidden min-h-screen flex flex-col md:flex-row">
 
-  <input type="file" id="mediaInput" class="hidden" accept="image/*,video/*" multiple>
+        <!-- DESKTOP SIDEBAR -->
+        <aside class="hidden md:flex flex-col w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 p-4 shrink-0 justify-between min-h-screen sticky top-0">
+            <div>
+                <div class="flex items-center gap-3 px-3 py-4 mb-6 border-b border-slate-100 dark:border-slate-800">
+                    <div class="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center text-white font-extrabold shadow-md">V4</div>
+                    <div>
+                        <h2 class="font-extrabold tracking-tight text-slate-900 dark:text-white text-base leading-tight">VIK4NT.INC</h2>
+                        <span class="text-[10px] text-brand-600 dark:text-brand-400 font-bold tracking-widest uppercase">Attendance</span>
+                    </div>
+                </div>
 
-  <div class="cards">
-    <div class="dashboard-card" onclick="triggerUpload('image/*')">
-      <div class="icon">📤</div>
-      <h3>Upload Photos</h3>
-      <p>Select & upload photos</p>
-    </div>
-    <div class="dashboard-card" onclick="triggerUpload('video/*')">
-      <div class="icon">🎥</div>
-      <h3>Upload Videos</h3>
-      <p>Select & upload videos</p>
-    </div>
-  </div>
+                <nav class="space-y-1">
+                    <button onclick="navigateTo('dashboard')" data-nav="dashboard" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <i class="fa-solid fa-chart-pie w-5 text-center"></i> Dashboard
+                    </button>
+                    <button onclick="navigateTo('mark')" data-nav="mark" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <i class="fa-solid fa-fingerprint w-5 text-center"></i> Mark Attendance
+                    </button>
+                    <button onclick="navigateTo('history')" data-nav="history" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <i class="fa-solid fa-clock-rotate-left w-5 text-center"></i> History
+                    </button>
+                    <button onclick="navigateTo('analytics')" data-nav="analytics" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <i class="fa-solid fa-chart-line w-5 text-center"></i> Analytics
+                    </button>
+                    <button onclick="navigateTo('notifications')" data-nav="notifications" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 relative">
+                        <i class="fa-solid fa-bell w-5 text-center"></i> Notifications
+                        <span id="badge-notif" class="hidden absolute right-4 w-2 h-2 rounded-full bg-red-500"></span>
+                    </button>
+                    <button onclick="navigateTo('profile')" data-nav="profile" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <i class="fa-solid fa-user-gear w-5 text-center"></i> Profile
+                    </button>
 
-  <div id="uploadStatus" style="margin-top:20px; color:#86efac;"></div>
+                    <!-- Admin Section -->
+                    <div id="admin-nav-group" class="hidden pt-4 mt-4 border-t border-slate-200 dark:border-slate-800">
+                        <p class="px-4 text-[10px] font-extrabold uppercase text-slate-400 tracking-wider mb-2">Admin Portal</p>
+                        <button onclick="navigateTo('admin-dash')" data-nav="admin-dash" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                            <i class="fa-solid fa-shield-halved w-5 text-center"></i> Admin Dashboard
+                        </button>
+                        <button onclick="navigateTo('admin-users')" data-nav="admin-users" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                            <i class="fa-solid fa-users w-5 text-center"></i> User Management
+                        </button>
+                        <button onclick="navigateTo('admin-attendance')" data-nav="admin-attendance" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                            <i class="fa-solid fa-calendar-check w-5 text-center"></i> Attendance Records
+                        </button>
+                    </div>
+                </nav>
+            </div>
 
-  <h3 style="margin-top:30px;">Uploaded Media</h3>
-  <div id="gallery" class="gallery"></div>
-</div>
+            <!-- Profile snippet & Dark mode toggle -->
+            <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-3 overflow-hidden">
+                    <div id="sidebar-avatar" class="w-9 h-9 rounded-full bg-brand-500 text-white flex items-center justify-center font-bold text-sm shrink-0">U</div>
+                    <div class="truncate">
+                        <p id="sidebar-name" class="text-xs font-bold text-slate-900 dark:text-white truncate">Loading...</p>
+                        <p id="sidebar-role" class="text-[10px] text-slate-500 capitalize truncate">User</p>
+                    </div>
+                </div>
+                <button onclick="toggleDarkMode()" class="p-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <i class="fa-solid fa-moon dark:hidden"></i>
+                    <i class="fa-solid fa-sun hidden dark:block"></i>
+                </button>
+            </div>
+        </aside>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { 
-  getAuth, 
-  onAuthStateChanged, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  sendPasswordResetEmail, 
-  signOut,
-  updateProfile 
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { 
-  getStorage, 
-  ref, 
-  uploadBytes, 
-  getDownloadURL, 
-  listAll 
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+        <!-- TOP BAR (Mobile Only) -->
+        <header class="md:hidden flex items-center justify-between p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 dark:border-slate-800">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-brand-600 text-white font-black flex items-center justify-center text-sm">V4</div>
+                <span class="font-extrabold text-sm tracking-tight">VIK4NT.INC</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="toggleDarkMode()" class="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <i class="fa-solid fa-moon dark:hidden"></i>
+                    <i class="fa-solid fa-sun hidden dark:block"></i>
+                </button>
+                <div id="mobile-avatar" onclick="navigateTo('profile')" class="w-8 h-8 rounded-full bg-brand-500 text-white flex items-center justify-center font-bold text-xs">U</div>
+            </div>
+        </header>
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBThHvIP2jeMllwcGuzo2HYIZiQFvL5Vu0",
-  authDomain: "vikram-media-portal.firebaseapp.com",
-  databaseURL: "https://vikram-media-portal-default-rtdb.firebaseio.com",
-  projectId: "vikram-media-portal",
-  storageBucket: "vikram-media-portal.firebasestorage.app",
-  messagingSenderId: "306957159390",
-  appId: "1:306957159390:web:44ce695630e0d3039deb4f"
-};
+        <!-- MAIN CONTENT CONTAINER -->
+        <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full overflow-x-hidden">
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const storage = getStorage(app);
+            <!-- VIEW: USER DASHBOARD -->
+            <section id="page-dashboard" class="page-view space-y-6">
+                <!-- Header Banner -->
+                <div class="glass p-6 md:p-8 rounded-3xl relative overflow-hidden bg-gradient-to-r from-brand-600 to-indigo-700 text-white border-0 shadow-xl">
+                    <div class="relative z-10">
+                        <span class="text-xs uppercase font-bold tracking-widest text-brand-200">Dashboard</span>
+                        <h1 class="text-2xl md:text-3xl font-extrabold mt-1">Hello, <span id="dash-user-name">User</span> 👋</h1>
+                        <p id="dash-date" class="text-xs md:text-sm text-brand-100 mt-2 font-medium">Loading date...</p>
+                    </div>
+                </div>
 
-let currentUser = null;
+                <!-- KPI Summary Cards -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="glass p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
+                        <div class="flex items-center justify-between text-slate-500 mb-2">
+                            <span class="text-xs font-bold uppercase tracking-wider">Attendance</span>
+                            <i class="fa-solid fa-percent text-brand-500"></i>
+                        </div>
+                        <h3 id="stat-rate" class="text-2xl font-black">0%</h3>
+                        <p class="text-[11px] text-slate-400 mt-1">Monthly Ratio</p>
+                    </div>
 
-const authPage = document.getElementById("authPage");
-const dashboardPage = document.getElementById("dashboardPage");
-const loginForm = document.getElementById("loginForm");
-const signupForm = document.getElementById("signupForm");
-const message = document.getElementById("message");
-const mediaInput = document.getElementById("mediaInput");
-const uploadStatus = document.getElementById("uploadStatus");
-const gallery = document.getElementById("gallery");
+                    <div class="glass p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
+                        <div class="flex items-center justify-between text-emerald-500 mb-2">
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Present</span>
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+                        <h3 id="stat-present" class="text-2xl font-black">0</h3>
+                        <p class="text-[11px] text-slate-400 mt-1">Days this month</p>
+                    </div>
 
-window.showMessage = function(text, type = "error") {
-  message.textContent = text;
-  message.className = "message show " + type;
-};
-
-window.showLogin = function() {
-  loginForm.classList.remove("hidden");
-  signupForm.classList.add("hidden");
-  document.getElementById("loginTab").classList.add("active");
-  document.getElementById("signupTab").classList.remove("active");
-};
-
-window.showSignup = function() {
-  signupForm.classList.remove("hidden");
-  loginForm.classList.add("hidden");
-  document.getElementById("signupTab").classList.add("active");
-  document.getElementById("loginTab").classList.remove("active");
-};
-
-window.togglePassword = function(id, btn) {
-  const input = document.getElementById(id);
-  input.type = input.type === "password" ? "text" : "password";
-  btn.textContent = input.type === "password" ? "Show" : "Hide";
-};
-
-// AUTH STATE LISTEN
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    currentUser = user;
-    authPage.classList.add("hidden");
-    dashboardPage.classList.remove("hidden");
-    document.getElementById("userEmail").textContent = user.email;
-    document.getElementById("userName").textContent = user.displayName || user.email.split('@')[0];
-    loadMedia(user);
-  } else {
-    currentUser = null;
-    authPage.classList.remove("hidden");
-    dashboardPage.classList.add("hidden");
-  }
-});
-
-// LOGIN
-loginForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const email = document.getElementById("loginEmail").value;
-  const password = document.getElementById("loginPassword").value;
-  try {
-    showMessage("Logging in...", "success");
-    await signInWithEmailAndPassword(auth, email, password);
-  } catch (err) {
-    showMessage("Login failed: Check email/password", "error");
-  }
-});
-
-// SIGNUP
-signupForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const name = document.getElementById("signupName").value;
-  const email = document.getElementById("signupEmail").value;
-  const password = document.getElementById("signupPassword").value;
-  try {
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
-    if(name) await updateProfile(cred.user, { displayName: name });
-  } catch (err) {
-    showMessage(err.message, "error");
-  }
-});
-
-window.logout = () => signOut(auth);
-
-// UPLOAD MEDIA
-window.triggerUpload = function(type) {
-  mediaInput.accept = type;
-  mediaInput.click();
-};
-
-mediaInput.addEventListener("change", async (e) => {
-  const files = e.target.files;
-  if(!files.length || !currentUser) return;
-
-  for(let file of files){
-    uploadStatus.textContent = `Uploading ${file.name}...`;
-    const fileRef = ref(storage, `uploads/${currentUser.uid}/${Date.now()}_${file.name}`);
-    try {
-      await uploadBytes(fileRef, file);
-      const url = await getDownloadURL(fileRef);
-      renderItem(url, file.type);
-      uploadStatus.textContent = "Upload successful!";
-    } catch(err) {
-      uploadStatus.textContent = "Upload failed: " + err.message;
-    }
-  }
-});
-
-function renderItem(url, type) {
-  const div = document.createElement("div");
-  div.className = "media-item";
-  div.innerHTML = type && type.includes("video") ? `<video src="${url}" controls></video>` : `<img src="${url}">`;
-  gallery.appendChild(div);
-}
-
-async function loadMedia(user) {
-  gallery.innerHTML = "";
-  const listRef = ref(storage, `uploads/${user.uid}`);
-  try {
-    const res = await listAll(listRef);
-    for(let item of res.items){
-      const url = await getDownloadURL(item);
-      renderItem(url, item.name.includes(".mp4") ? "video" : "image");
-    }
-  } catch(e){}
-}
-</script>
-
-</body>
-</html>
+                    <div class="glass p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
+                        <div class="flex items-center justify-between text-amber-500 mb-2">
+          
