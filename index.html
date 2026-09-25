@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VIK4NT.INC Attendance</title>
+    <title>VIK4NT.INC Attendance & Portal</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -28,7 +28,7 @@
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Firebase SDK (Compat) -->
+    <!-- Firebase SDKs (Compat Version for Maximum Mobile/Brave Compatibility) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -47,22 +47,38 @@
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
         button, a, input, select { touch-action: manipulation; }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1rem); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen font-sans antialiased selection:bg-brand-500 selection:text-white pb-20 md:pb-0">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen font-sans antialiased pb-20 md:pb-0">
 
-    <!-- Notification Toast -->
+    <!-- Toast Notifications Container -->
     <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full px-4 pointer-events-none"></div>
 
-    <!-- AUTH CONTAINER -->
+    <!-- Confirm Modal -->
+    <div id="confirm-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm hidden">
+        <div class="glass dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-800">
+            <h3 id="modal-title" class="text-lg font-bold mb-2 text-slate-900 dark:text-white">Confirm Action</h3>
+            <p id="modal-msg" class="text-sm text-slate-600 dark:text-slate-400 mb-6">Are you sure?</p>
+            <div class="flex gap-3">
+                <button onclick="closeModal()" class="flex-1 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition">Cancel</button>
+                <button id="modal-confirm-btn" class="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUTH LAYOUT (Login/Signup/Forgot) -->
     <div id="auth-container" class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+        <div class="absolute -top-40 -left-40 w-96 h-96 bg-brand-500/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
         <div class="w-full max-w-md glass dark:bg-slate-900/80 rounded-3xl p-8 shadow-2xl relative z-10 border border-slate-200 dark:border-slate-800">
             <div class="text-center mb-8">
-                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-600 text-white text-2xl font-black mb-3 shadow-lg shadow-brand-500/30">
-                    V4
-                </div>
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-600 text-white text-2xl font-black mb-3 shadow-lg shadow-brand-500/30">V4</div>
                 <h1 class="text-2xl font-extrabold tracking-tight">VIK4NT.INC</h1>
-                <p class="text-xs text-brand-600 dark:text-brand-400 font-semibold tracking-wider uppercase mt-1">Attendance Portal</p>
+                <p class="text-xs text-brand-600 dark:text-brand-400 font-semibold tracking-wider uppercase mt-1">Enterprise Portal</p>
             </div>
 
             <!-- Login View -->
@@ -70,7 +86,7 @@
                 <h2 class="text-xl font-bold text-slate-900 dark:text-white">Welcome back</h2>
                 <form id="form-login" class="space-y-4">
                     <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Email</label>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Email Address</label>
                         <input type="email" id="login-email" required class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-transparent focus:border-brand-500 outline-none text-sm">
                     </div>
                     <div>
@@ -92,7 +108,19 @@
                 <h2 class="text-xl font-bold text-slate-900 dark:text-white">Create Account</h2>
                 <form id="form-signup" class="space-y-3">
                     <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Email</label>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Full Name</label>
+                        <input type="text" id="signup-name" required class="w-full px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-transparent focus:border-brand-500 outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Employee ID</label>
+                        <input type="text" id="signup-empid" required placeholder="e.g. EMP-101" class="w-full px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-transparent focus:border-brand-500 outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Branch Name</label>
+                        <input type="text" id="signup-branch" required placeholder="e.g. Mumbai Main / Delhi North" class="w-full px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-transparent focus:border-brand-500 outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Email Address</label>
                         <input type="email" id="signup-email" required class="w-full px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-transparent focus:border-brand-500 outline-none text-sm">
                     </div>
                     <div>
@@ -114,7 +142,7 @@
                         <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Email</label>
                         <input type="email" id="forgot-email" required class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-transparent focus:border-brand-500 outline-none text-sm">
                     </div>
-                    <button type="submit" id="btn-forgot" class="w-full py-3.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm shadow-lg transition">Send Reset Link</button>
+                    <button type="submit" id="btn-forgot" class="w-full py-3.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm shadow-lg transition">Send Password Reset Link</button>
                 </form>
                 <p class="text-xs text-center text-slate-500">
                     <button type="button" onclick="switchAuthView('login')" class="text-brand-600 dark:text-brand-400 font-semibold hover:underline">Back to Login</button>
@@ -125,146 +153,123 @@
 
     <!-- MAIN APP WRAPPER -->
     <div id="app-container" class="hidden min-h-screen flex flex-col md:flex-row">
+
+        <!-- DESKTOP SIDEBAR -->
         <aside class="hidden md:flex flex-col w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 p-4 shrink-0 justify-between min-h-screen sticky top-0">
             <div>
                 <div class="flex items-center gap-3 px-3 py-4 mb-6 border-b border-slate-100 dark:border-slate-800">
                     <div class="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center text-white font-extrabold shadow-md">V4</div>
                     <div>
                         <h2 class="font-extrabold tracking-tight text-slate-900 dark:text-white text-base leading-tight">VIK4NT.INC</h2>
-                        <span class="text-[10px] text-brand-600 dark:text-brand-400 font-bold tracking-widest uppercase">Attendance</span>
+                        <span class="text-[10px] text-brand-600 dark:text-brand-400 font-bold tracking-widest uppercase">Portal</span>
                     </div>
                 </div>
 
                 <nav class="space-y-1">
-                    <button onclick="navigateTo('dashboard')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <button onclick="navigateTo('dashboard')" data-nav="dashboard" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
                         <i class="fa-solid fa-chart-pie w-5 text-center"></i> Dashboard
                     </button>
-                    <button onclick="navigateTo('mark')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <button onclick="navigateTo('mark')" data-nav="mark" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
                         <i class="fa-solid fa-fingerprint w-5 text-center"></i> Mark Attendance
                     </button>
+                    <button onclick="navigateTo('learning')" data-nav="learning" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <i class="fa-solid fa-graduation-cap w-5 text-center"></i> Learning Hub
+                    </button>
+                    <button onclick="navigateTo('history')" data-nav="history" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <i class="fa-solid fa-clock-rotate-left w-5 text-center"></i> History
+                    </button>
+                    <button onclick="navigateTo('profile')" data-nav="profile" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <i class="fa-solid fa-user-gear w-5 text-center"></i> Profile
+                    </button>
+
+                    <!-- Admin Group -->
+                    <div id="admin-nav-group" class="hidden pt-4 mt-4 border-t border-slate-200 dark:border-slate-800">
+                        <p class="px-4 text-[10px] font-extrabold uppercase text-slate-400 tracking-wider mb-2">Admin Panel</p>
+                        <button onclick="navigateTo('admin-users')" data-nav="admin-users" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                            <i class="fa-solid fa-users-gear w-5 text-center"></i> User Roles & Branches
+                        </button>
+                    </div>
                 </nav>
             </div>
+
+            <!-- Profile snippet & Dark mode toggle -->
             <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <span id="sidebar-name" class="text-xs font-bold text-slate-900 dark:text-white truncate">User</span>
+                <div class="flex items-center gap-3 overflow-hidden">
+                    <div id="sidebar-avatar" class="w-9 h-9 rounded-full bg-brand-500 text-white flex items-center justify-center font-bold text-sm shrink-0">U</div>
+                    <div class="truncate">
+                        <p id="sidebar-name" class="text-xs font-bold text-slate-900 dark:text-white truncate">User</p>
+                        <p id="sidebar-role-badge" class="text-[10px] text-brand-600 dark:text-brand-400 font-bold uppercase truncate">Employee</p>
+                    </div>
+                </div>
                 <button onclick="handleLogout()" class="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl"><i class="fa-solid fa-right-from-bracket"></i></button>
             </div>
         </aside>
 
-        <main class="flex-1 p-6 max-w-7xl mx-auto w-full">
+        <!-- TOP BAR (Mobile Only) -->
+        <header class="md:hidden flex items-center justify-between p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 dark:border-slate-800">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-brand-600 text-white font-black flex items-center justify-center text-sm">V4</div>
+                <span class="font-extrabold text-sm tracking-tight">VIK4NT.INC</span>
+            </div>
+            <div id="mobile-avatar" onclick="navigateTo('profile')" class="w-8 h-8 rounded-full bg-brand-500 text-white flex items-center justify-center font-bold text-xs">U</div>
+        </header>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full overflow-x-hidden">
+
+            <!-- DASHBOARD VIEW -->
             <section id="page-dashboard" class="page-view space-y-6">
-                <div class="glass p-6 rounded-3xl bg-gradient-to-r from-brand-600 to-indigo-700 text-white shadow-xl">
-                    <h1 class="text-2xl font-extrabold">Welcome, <span id="dash-user-name">User</span> 👋</h1>
+                <div class="glass p-6 md:p-8 rounded-3xl relative overflow-hidden bg-gradient-to-r from-brand-600 to-indigo-700 text-white shadow-xl">
+                    <div class="relative z-10">
+                        <span class="text-xs uppercase font-bold tracking-widest text-brand-200">Welcome Back</span>
+                        <h1 class="text-2xl md:text-3xl font-extrabold mt-1"><span id="dash-user-name">User</span> 👋</h1>
+                        <p class="text-xs md:text-sm text-brand-100 mt-2 font-medium">Branch: <span id="dash-branch" class="font-bold underline">Main</span> | Role: <span id="dash-role" class="font-bold uppercase">Employee</span></p>
+                    </div>
                 </div>
-                <button onclick="navigateTo('mark')" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-semibold text-sm">Mark Attendance Now</button>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="glass p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
+                        <span class="text-xs font-bold uppercase text-slate-500">Attendance</span>
+                        <h3 id="stat-rate" class="text-2xl font-black mt-1">100%</h3>
+                        <p class="text-[11px] text-slate-400 mt-1">Monthly Average</p>
+                    </div>
+                    <div class="glass p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
+                        <span class="text-xs font-bold uppercase text-emerald-500">Present</span>
+                        <h3 id="stat-present" class="text-2xl font-black mt-1">0 Days</h3>
+                        <p class="text-[11px] text-slate-400 mt-1">This month</p>
+                    </div>
+                    <div class="glass p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
+                        <span class="text-xs font-bold uppercase text-amber-500">Late Arrival</span>
+                        <h3 id="stat-late" class="text-2xl font-black mt-1">0 Days</h3>
+                        <p class="text-[11px] text-slate-400 mt-1">This month</p>
+                    </div>
+                    <div class="glass p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
+                        <span class="text-xs font-bold uppercase text-brand-500">Work Hours</span>
+                        <h3 id="stat-hours" class="text-2xl font-black mt-1">0.0 Hrs</h3>
+                        <p class="text-[11px] text-slate-400 mt-1">Logged Total</p>
+                    </div>
+                </div>
+
+                <!-- Today Status Card -->
+                <div class="glass p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+                    <h3 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-calendar-day text-brand-500"></i> Today's Attendance</h3>
+                    <div id="today-status-box" class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800/50 flex items-center justify-between">
+                        <div>
+                            <p id="today-status-label" class="font-extrabold text-lg text-slate-700 dark:text-slate-300">Not Checked In</p>
+                            <p id="today-time-info" class="text-xs text-slate-500 mt-0.5">Please check in to record your workday.</p>
+                        </div>
+                        <span id="today-status-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300">Pending</span>
+                    </div>
+                    <button onclick="navigateTo('mark')" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-semibold text-sm transition shadow-md shadow-brand-500/20">Go to Check In / Out</button>
+                </div>
             </section>
 
+            <!-- MARK ATTENDANCE VIEW -->
             <section id="page-mark" class="page-view space-y-6 hidden">
-                <h1 class="text-2xl font-extrabold">Mark Attendance</h1>
-                <button onclick="executeCheckIn()" class="w-full py-4 rounded-2xl bg-emerald-600 text-white font-bold text-sm">Check In</button>
-            </section>
-        </main>
-    </div>
-
-    <!-- Script Execution -->
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAHZL3oGytPPhbSm2yiy9LeoEv-G6Fb0i4",
-            authDomain: "vikram-media-portal.firebaseapp.com",
-            projectId: "vikram-media-portal",
-            storageBucket: "vikram-media-portal.firebasestorage.app",
-            messagingSenderId: "306957159390",
-            appId: "1:306957159390:web:45af46a3507e50119deb4f"
-        };
-
-        // Initialize Firebase safely
-        try {
-            firebase.initializeApp(firebaseConfig);
-        } catch(e) {
-            console.error(e);
-        }
-
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-
-        // Auth state listener
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                document.getElementById('auth-container').classList.add('hidden');
-                document.getElementById('app-container').classList.remove('hidden');
-                document.getElementById('dash-user-name').innerText = user.email.split('@')[0];
-                document.getElementById('sidebar-name').innerText = user.email.split('@')[0];
-                navigateTo('dashboard');
-            } else {
-                document.getElementById('auth-container').classList.remove('hidden');
-                document.getElementById('app-container').classList.add('hidden');
-            }
-        });
-
-        function switchAuthView(v) {
-            document.getElementById('view-login').classList.add('hidden');
-            document.getElementById('view-signup').classList.add('hidden');
-            document.getElementById('view-forgot').classList.add('hidden');
-            document.getElementById(`view-${v}`).classList.remove('hidden');
-        }
-
-        document.getElementById('form-login').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            try {
-                await auth.signInWithEmailAndPassword(email, password);
-                showToast('Login Successful!', 'success');
-            } catch (err) {
-                showToast(err.message, 'error');
-            }
-        });
-
-        document.getElementById('form-signup').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('signup-email').value;
-            const password = document.getElementById('signup-password').value;
-            try {
-                await auth.createUserWithEmailAndPassword(email, password);
-                showToast('Account Created Successfully!', 'success');
-            } catch (err) {
-                showToast(err.message, 'error');
-            }
-        });
-
-        document.getElementById('form-forgot').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('forgot-email').value;
-            try {
-                await auth.sendPasswordResetEmail(email);
-                showToast('Reset email sent!', 'success');
-                switchAuthView('login');
-            } catch (err) {
-                showToast(err.message, 'error');
-            }
-        });
-
-        async function handleLogout() {
-            await auth.signOut();
-            showToast('Logged out', 'info');
-        }
-
-        function navigateTo(pageId) {
-            document.querySelectorAll('.page-view').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`page-${pageId}`).classList.remove('hidden');
-        }
-
-        async function executeCheckIn() {
-            showToast('Check In Logged!', 'success');
-        }
-
-        function showToast(msg, type) {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `p-4 rounded-xl text-white text-xs font-bold shadow-lg ${type==='success'?'bg-emerald-600':type==='error'?'bg-rose-600':'bg-slate-800'}`;
-            toast.innerText = msg;
-            container.appendChild(toast);
-            setTimeout(() => toast.remove(), 4000);
-        }
-    </script>
-</body>
-</html>
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 class="text-2xl font-extrabold">Attendance Check In & Out</h1>
+                        <p class="text-xs text-slate-500">Record your daily work timing.</p>
+                    </div>
+                    <div cl
