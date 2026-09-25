@@ -29,6 +29,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Firebase Compat SDKs (Better Browser Support) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
     <style>
         .glass {
             background: rgba(255, 255, 255, 0.7);
@@ -42,38 +48,29 @@
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
-        /* Mobile Touch Optimization */
-        button, a, input, select {
-            touch-action: manipulation;
-        }
+        button, a, input, select { touch-action: manipulation; }
         .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1rem); }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen font-sans antialiased selection:bg-brand-500 selection:text-white pb-20 md:pb-0">
 
-    <!-- Toast Notification Container -->
+    <!-- Toast Notification -->
     <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full px-4 pointer-events-none"></div>
 
-    <!-- Confirmation Modal -->
+    <!-- Confirm Modal -->
     <div id="confirm-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm hidden">
         <div class="glass dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-800">
             <h3 id="modal-title" class="text-lg font-bold mb-2 text-slate-900 dark:text-white">Confirm Action</h3>
             <p id="modal-msg" class="text-sm text-slate-600 dark:text-slate-400 mb-6">Are you sure you want to proceed?</p>
             <div class="flex gap-3">
-                <button id="modal-cancel-btn" onclick="closeModal()" class="flex-1 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition">Cancel</button>
+                <button onclick="closeModal()" class="flex-1 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition">Cancel</button>
                 <button id="modal-confirm-btn" class="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition">Confirm</button>
             </div>
         </div>
     </div>
 
-    <!-- AUTH LAYOUT (Login/Signup/Reset) -->
+    <!-- AUTH CONTAINER -->
     <div id="auth-container" class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-        <!-- Background Gradient Blobs -->
-        <div class="absolute -top-40 -left-40 w-96 h-96 bg-brand-500/30 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl pointer-events-none"></div>
-
         <div class="w-full max-w-md glass dark:bg-slate-900/80 rounded-3xl p-8 shadow-2xl relative z-10 border border-slate-200 dark:border-slate-800">
             <div class="text-center mb-8">
                 <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-600 text-white text-2xl font-black mb-3 shadow-lg shadow-brand-500/30">
@@ -89,18 +86,16 @@
                 <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4">
                     <div>
                         <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Email</label>
-                        <input type="email" id="login-email" required class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-transparent focus:border-brand-500 focus:bg-transparent transition outline-none text-sm">
+                        <input type="email" id="login-email" required class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-transparent focus:border-brand-500 outline-none text-sm">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Password</label>
-                        <input type="password" id="login-password" required class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-transparent focus:border-brand-500 focus:bg-transparent transition outline-none text-sm">
+                        <input type="password" id="login-password" required class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-transparent focus:border-brand-500 outline-none text-sm">
                     </div>
                     <div class="flex justify-end">
                         <button type="button" onclick="switchAuthView('forgot')" class="text-xs text-brand-600 dark:text-brand-400 font-medium hover:underline">Forgot password?</button>
                     </div>
-                    <button type="submit" id="btn-login" class="w-full py-3.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm shadow-lg shadow-brand-500/25 transition flex items-center justify-center gap-2">
-                        <span>Sign In</span>
-                    </button>
+                    <button type="submit" id="btn-login" class="w-full py-3.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm shadow-lg shadow-brand-500/25 transition">Sign In</button>
                 </form>
                 <p class="text-xs text-center text-slate-500 mt-6">
                     Don't have an account? <button onclick="switchAuthView('signup')" class="text-brand-600 dark:text-brand-400 font-semibold hover:underline">Sign up</button>
@@ -138,16 +133,15 @@
                 </p>
             </div>
 
-            <!-- Forgot Password View -->
+            <!-- Forgot View -->
             <div id="view-forgot" class="space-y-4 hidden">
                 <h2 class="text-xl font-bold text-slate-900 dark:text-white">Reset Password</h2>
-                <p class="text-xs text-slate-500">Enter your account email to receive a password recovery link.</p>
                 <form id="form-forgot" onsubmit="handleForgot(event)" class="space-y-4">
                     <div>
                         <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Email</label>
                         <input type="email" id="forgot-email" required class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-transparent focus:border-brand-500 outline-none text-sm">
                     </div>
-                    <button type="submit" id="btn-forgot" class="w-full py-3.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm shadow-lg transition">Send Password Reset Link</button>
+                    <button type="submit" id="btn-forgot" class="w-full py-3.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm shadow-lg transition">Send Reset Link</button>
                 </form>
                 <p class="text-xs text-center text-slate-500">
                     <button onclick="switchAuthView('login')" class="text-brand-600 dark:text-brand-400 font-semibold hover:underline">Back to Login</button>
@@ -156,10 +150,9 @@
         </div>
     </div>
 
-    <!-- MAIN APP WRAPPER (Protected Views) -->
+    <!-- MAIN APP WRAPPER -->
     <div id="app-container" class="hidden min-h-screen flex flex-col md:flex-row">
-
-        <!-- DESKTOP SIDEBAR -->
+        <!-- Sidebar -->
         <aside class="hidden md:flex flex-col w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 p-4 shrink-0 justify-between min-h-screen sticky top-0">
             <div>
                 <div class="flex items-center gap-3 px-3 py-4 mb-6 border-b border-slate-100 dark:border-slate-800">
@@ -180,98 +173,139 @@
                     <button onclick="navigateTo('history')" data-nav="history" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
                         <i class="fa-solid fa-clock-rotate-left w-5 text-center"></i> History
                     </button>
-                    <button onclick="navigateTo('analytics')" data-nav="analytics" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
-                        <i class="fa-solid fa-chart-line w-5 text-center"></i> Analytics
-                    </button>
-                    <button onclick="navigateTo('notifications')" data-nav="notifications" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 relative">
-                        <i class="fa-solid fa-bell w-5 text-center"></i> Notifications
-                        <span id="badge-notif" class="hidden absolute right-4 w-2 h-2 rounded-full bg-red-500"></span>
-                    </button>
                     <button onclick="navigateTo('profile')" data-nav="profile" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
                         <i class="fa-solid fa-user-gear w-5 text-center"></i> Profile
                     </button>
-
-                    <!-- Admin Section -->
-                    <div id="admin-nav-group" class="hidden pt-4 mt-4 border-t border-slate-200 dark:border-slate-800">
-                        <p class="px-4 text-[10px] font-extrabold uppercase text-slate-400 tracking-wider mb-2">Admin Portal</p>
-                        <button onclick="navigateTo('admin-dash')" data-nav="admin-dash" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
-                            <i class="fa-solid fa-shield-halved w-5 text-center"></i> Admin Dashboard
-                        </button>
-                        <button onclick="navigateTo('admin-users')" data-nav="admin-users" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
-                            <i class="fa-solid fa-users w-5 text-center"></i> User Management
-                        </button>
-                        <button onclick="navigateTo('admin-attendance')" data-nav="admin-attendance" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
-                            <i class="fa-solid fa-calendar-check w-5 text-center"></i> Attendance Records
-                        </button>
-                    </div>
                 </nav>
             </div>
-
-            <!-- Profile snippet & Dark mode toggle -->
             <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <div class="flex items-center gap-3 overflow-hidden">
-                    <div id="sidebar-avatar" class="w-9 h-9 rounded-full bg-brand-500 text-white flex items-center justify-center font-bold text-sm shrink-0">U</div>
-                    <div class="truncate">
-                        <p id="sidebar-name" class="text-xs font-bold text-slate-900 dark:text-white truncate">Loading...</p>
-                        <p id="sidebar-role" class="text-[10px] text-slate-500 capitalize truncate">User</p>
-                    </div>
-                </div>
-                <button onclick="toggleDarkMode()" class="p-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">
-                    <i class="fa-solid fa-moon dark:hidden"></i>
-                    <i class="fa-solid fa-sun hidden dark:block"></i>
-                </button>
+                <span id="sidebar-name" class="text-xs font-bold text-slate-900 dark:text-white truncate">User</span>
+                <button onclick="handleLogout()" class="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl"><i class="fa-solid fa-right-from-bracket"></i></button>
             </div>
         </aside>
 
-        <!-- TOP BAR (Mobile Only) -->
-        <header class="md:hidden flex items-center justify-between p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 dark:border-slate-800">
-            <div class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-lg bg-brand-600 text-white font-black flex items-center justify-center text-sm">V4</div>
-                <span class="font-extrabold text-sm tracking-tight">VIK4NT.INC</span>
-            </div>
-            <div class="flex items-center gap-3">
-                <button onclick="toggleDarkMode()" class="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">
-                    <i class="fa-solid fa-moon dark:hidden"></i>
-                    <i class="fa-solid fa-sun hidden dark:block"></i>
-                </button>
-                <div id="mobile-avatar" onclick="navigateTo('profile')" class="w-8 h-8 rounded-full bg-brand-500 text-white flex items-center justify-center font-bold text-xs">U</div>
-            </div>
-        </header>
-
-        <!-- MAIN CONTENT CONTAINER -->
-        <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full overflow-x-hidden">
-
-            <!-- VIEW: USER DASHBOARD -->
+        <!-- Main Content -->
+        <main class="flex-1 p-6 max-w-7xl mx-auto w-full">
             <section id="page-dashboard" class="page-view space-y-6">
-                <!-- Header Banner -->
-                <div class="glass p-6 md:p-8 rounded-3xl relative overflow-hidden bg-gradient-to-r from-brand-600 to-indigo-700 text-white border-0 shadow-xl">
-                    <div class="relative z-10">
-                        <span class="text-xs uppercase font-bold tracking-widest text-brand-200">Dashboard</span>
-                        <h1 class="text-2xl md:text-3xl font-extrabold mt-1">Hello, <span id="dash-user-name">User</span> 👋</h1>
-                        <p id="dash-date" class="text-xs md:text-sm text-brand-100 mt-2 font-medium">Loading date...</p>
+                <div class="glass p-6 rounded-3xl bg-gradient-to-r from-brand-600 to-indigo-700 text-white shadow-xl">
+                    <h1 class="text-2xl font-extrabold">Welcome, <span id="dash-user-name">User</span> 👋</h1>
+                    <p id="dash-date" class="text-xs text-brand-100 mt-1">Loading...</p>
+                </div>
+                <div class="glass p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+                    <h3 class="font-bold text-base"><i class="fa-solid fa-calendar-day text-brand-500 mr-2"></i>Today's Attendance</h3>
+                    <div id="today-status-box" class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800/50 flex items-center justify-between">
+                        <div>
+                            <p id="today-status-label" class="font-extrabold text-lg text-slate-700 dark:text-slate-300">Not Marked</p>
+                            <p id="today-time-info" class="text-xs text-slate-500 mt-0.5">No log found for today</p>
+                        </div>
+                    </div>
+                    <button onclick="navigateTo('mark')" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-semibold text-sm transition">Mark Attendance Now</button>
+                </div>
+            </section>
+
+            <section id="page-mark" class="page-view space-y-6 hidden">
+                <h1 class="text-2xl font-extrabold">Mark Attendance</h1>
+                <div class="glass p-8 rounded-3xl border border-slate-200 dark:border-slate-800 text-center max-w-md mx-auto space-y-6">
+                    <div class="grid grid-cols-2 gap-4">
+                        <button id="btn-checkin" onclick="executeCheckIn()" class="py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-lg">Check In</button>
+                        <button id="btn-checkout" onclick="executeCheckOut()" class="py-4 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm shadow-lg">Check Out</button>
                     </div>
                 </div>
+            </section>
 
-                <!-- KPI Summary Cards -->
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="glass p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
-                        <div class="flex items-center justify-between text-slate-500 mb-2">
-                            <span class="text-xs font-bold uppercase tracking-wider">Attendance</span>
-                            <i class="fa-solid fa-percent text-brand-500"></i>
-                        </div>
-                        <h3 id="stat-rate" class="text-2xl font-black">0%</h3>
-                        <p class="text-[11px] text-slate-400 mt-1">Monthly Ratio</p>
-                    </div>
+            <section id="page-history" class="page-view space-y-6 hidden">
+                <h1 class="text-2xl font-extrabold">Attendance History</h1>
+                <div class="glass rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold uppercase">
+                            <tr><th class="p-4">Date</th><th class="p-4">Check In</th><th class="p-4">Check Out</th><th class="p-4">Status</th></tr>
+                        </thead>
+                        <tbody id="history-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
+                            <tr><td colspan="4" class="p-4 text-center text-slate-400">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
 
-                    <div class="glass p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
-                        <div class="flex items-center justify-between text-emerald-500 mb-2">
-                            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Present</span>
-                            <i class="fa-solid fa-circle-check"></i>
-                        </div>
-                        <h3 id="stat-present" class="text-2xl font-black">0</h3>
-                        <p class="text-[11px] text-slate-400 mt-1">Days this month</p>
-                    </div>
+            <section id="page-profile" class="page-view space-y-6 hidden">
+                <h1 class="text-2xl font-extrabold">Profile</h1>
+                <div class="glass p-6 rounded-3xl border border-slate-200 dark:border-slate-800 max-w-md space-y-4">
+                    <div><label class="text-xs text-slate-400 uppercase font-bold">Name</label><p id="prof-name" class="font-bold text-base">User</p></div>
+                    <div><label class="text-xs text-slate-400 uppercase font-bold">Email</label><p id="prof-email" class="font-bold text-base">user@email.com</p></div>
+                    <button onclick="handleLogout()" class="w-full py-3 rounded-xl bg-red-600 text-white font-bold text-xs">Logout</button>
+                </div>
+            </section>
+        </main>
+    </div>
 
-                    <div class="glass p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
-                        <div class="flex items-center justify-between text-amber-500 mb-2">
-          
+    <!-- Firebase App Logic -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAHZL3oGytPPhbSm2yiy9LeoEv-G6Fb0i4",
+            authDomain: "vikram-media-portal.firebaseapp.com",
+            projectId: "vikram-media-portal",
+            storageBucket: "vikram-media-portal.firebasestorage.app",
+            messagingSenderId: "306957159390",
+            appId: "1:306957159390:web:45af46a3507e50119deb4f"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let currentUser = null;
+
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('auth-container').classList.add('hidden');
+                document.getElementById('app-container').classList.remove('hidden');
+                document.getElementById('dash-user-name').innerText = user.email.split('@')[0];
+                document.getElementById('sidebar-name').innerText = user.email.split('@')[0];
+                document.getElementById('prof-name').innerText = user.email.split('@')[0];
+                document.getElementById('prof-email').innerText = user.email;
+                navigateTo('dashboard');
+            } else {
+                currentUser = null;
+                document.getElementById('auth-container').classList.remove('hidden');
+                document.getElementById('app-container').classList.add('hidden');
+            }
+        });
+
+        function switchAuthView(v) {
+            document.getElementById('view-login').classList.add('hidden');
+            document.getElementById('view-signup').classList.add('hidden');
+            document.getElementById('view-forgot').classList.add('hidden');
+            document.getElementById(`view-${v}`).classList.remove('hidden');
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                showToast('Login successful!', 'success');
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function handleSignup(e) {
+            e.preventDefault();
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            try {
+                await auth.createUserWithEmailAndPassword(email, password);
+                showToast('Registration successful!', 'success');
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function handleForgot(e) {
+            e.preventDefault();
+            const email = document.getElementById('forgot-email').value;
+            try {
+                await auth.sendPasswo
