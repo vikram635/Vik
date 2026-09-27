@@ -4,8 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>VIK4NT.INC Attendance</title>
-<!-- Supabase JS Client -->
+<!-- Primary & Backup Supabase CDN -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  if (typeof supabase === 'undefined') {
+    document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>');
+  }
+</script>
 <style>
 *{ box-sizing:border-box; margin:0; padding:0; }
 :root{
@@ -33,7 +38,7 @@ button,input,select{ font-family:inherit; }
 input,select{ width:100%; padding:14px; margin:7px 0; border-radius:12px; border:1px solid rgba(255,255,255,.15); background:rgba(0,0,0,.25); color:white; outline:none; font-size:15px; }
 select option{ background:#101827; color:white; }
 .primary{ width:100%; margin-top:12px; padding:14px; border:0; border-radius:12px; color:white; font-weight:bold; font-size:15px; cursor:pointer; background:linear-gradient(135deg,var(--purple),var(--blue)); }
-.message{ min-height:22px; margin-top:15px; text-align:center; color:#facc15; }
+.message{ min-height:22px; margin-top:15px; text-align:center; color:#facc15; font-size: 14px; word-break: break-word; }
 
 /* HEADER & NAVIGATION */
 .header{ display:flex; justify-content:space-between; align-items:center; gap:15px; margin-bottom:20px; flex-wrap:wrap; }
@@ -262,10 +267,9 @@ th{ color:#aaa; }
 </div>
 
 <script>
-// Supabase Credentials
 const SUPABASE_URL = "https://jdetqupmtgrrwzrufhsg.supabase.co";
 const SUPABASE_KEY = "sb_publishable_QVtX3-gxQnXhsZC5tIwV8w_XXOGmmNI";
-const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let db = null;
 
 let currentUser = JSON.parse(localStorage.getItem("vikram_attendance_user") || "null");
 let allUsers = [];
@@ -273,6 +277,18 @@ let currentAdminAttendance = [];
 let pendingAction = null;
 
 window.onload = function() {
+  try {
+    if (typeof supabase !== 'undefined') {
+      db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    } else {
+      message("⚠️ Supabase script not loaded. Refresh page!");
+      return;
+    }
+  } catch(e) {
+    message("⚠️ DB Init Error: " + e.message);
+    return;
+  }
+
   if (currentUser) { navigateUser(); } else { showLogin(); }
 };
 
@@ -298,49 +314,80 @@ function showSignup() {
 }
 
 async function signup(e) {
-  e.preventDefault(); loading(true);
-  const fullName = document.getElementById("signupName").value.trim();
-  const email = document.getElementById("signupEmail").value.trim();
-  const phone = document.getElementById("signupPhone").value.trim();
-  const password = document.getElementById("signupPassword").value;
+  e.preventDefault(); 
+  loading(true);
+  message("");
 
-  const { data: existing } = await db.from('users').select('email').eq('email', email);
-  if (existing && existing.length > 0) {
-    loading(false); message("Email already registered!"); return;
+  try {
+    const fullName = document.getElementById("signupName").value.trim();
+    const email = document.getElementById("signupEmail").value.trim();
+    const phone = document.getElementById("signupPhone").value.trim();
+    const password = document.getElementById("signupPassword").value;
+
+    const { data: existing, error: checkErr } = await db.from('users').select('email').eq('email', email);
+    if (checkErr) throw checkErr;
+
+    if (existing && existing.length > 0) {
+      loading(false); 
+      message("❌ Email already registered!"); 
+      return;
+    }
+
+    const { count, error: countErr } = await db.from('users').select('*', { count: 'exact', head: true });
+    if (countErr) throw countErr;
+
+    const role = (count === 0) ? 'ADMIN' : 'USER';
+
+    const { error: insErr } = await db.from('users').insert([{
+      full_name: fullName, 
+      email: email, 
+      phone: phone, 
+      password: password, 
+      role: role
+    }]);
+
+    if (insErr) throw insErr;
+
+    loading(false);
+    message("✅ Account created! Switching to Login...");
+    document.getElementById("signupForm").reset();
+    setTimeout(showLogin, 1500);
+
+  } catch(err) {
+    loading(false);
+    message("❌ " + (err.message || "Signup failed"));
   }
-
-  const { count } = await db.from('users').select('*', { count: 'exact', head: true });
-  const role = (count === 0) ? 'ADMIN' : 'USER';
-
-  const { error } = await db.from('users').insert([{
-    full_name: fullName, email: email, phone: phone, password: password, role: role
-  }]);
-
-  loading(false);
-  if (error) { message(error.message); return; }
-  message("✅ Account created. Please login.");
-  document.getElementById("signupForm").reset();
-  setTimeout(showLogin, 1000);
 }
 
 async function login(e) {
-  e.preventDefault(); loading(true);
-  const email = document.getElementById("loginEmail").value.trim();
-  const password = document.getElementById("loginPassword").value;
+  e.preventDefault(); 
+  loading(true);
+  message("");
 
-  const { data, error } = await db.from('users')
-    .select('*')
-    .eq('email', email)
-    .eq('password', password)
-    .maybeSingle();
+  try {
+    const email = document.getElementById("loginEmail").value.trim();
+    const password = document.getElementById("loginPassword").value;
 
-  loading(false);
-  if (error || !data) { message("Invalid email or password!"); return; }
-  if (data.status !== "ACTIVE") { message("Your account is blocked!"); return; }
+    const { data, error } = await db.from('users')
+      .select('*')
+      .eq('email', email)
+      .eq('password', password)
+      .maybeSingle();
 
-  currentUser = data;
-  localStorage.setItem("vikram_attendance_user", JSON.stringify(currentUser));
-  navigateUser();
+    loading(false);
+
+    if (error) throw error;
+    if (!data) { message("❌ Invalid email or password!"); return; }
+    if (data.status !== "ACTIVE") { message("❌ Your account is blocked!"); return; }
+
+    currentUser = data;
+    localStorage.setItem("vikram_attendance_user", JSON.stringify(currentUser));
+    navigateUser();
+
+  } catch(err) {
+    loading(false);
+    message("❌ " + (err.message || "Login failed"));
+  }
 }
 
 function logout() {
@@ -389,66 +436,39 @@ function switchTab(tabName) {
 }
 
 async function loadUserDashboard() {
-  const today = new Date().toISOString().slice(0,10);
-  
-  const { data: todayRec } = await db.from('attendance')
-    .select('*')
-    .eq('user_id', currentUser.user_id)
-    .eq('date', today)
-    .maybeSingle();
+  try {
+    const today = new Date().toISOString().slice(0,10);
+    
+    const { data: todayRec } = await db.from('attendance')
+      .select('*')
+      .eq('user_id', currentUser.user_id)
+      .eq('date', today)
+      .maybeSingle();
 
-  if (todayRec) {
-    document.getElementById("todayStatus").textContent = todayRec.status || "Not Marked";
-    document.getElementById("checkInTime").textContent = todayRec.check_in || "--";
-    document.getElementById("checkOutTime").textContent = todayRec.check_out || "--";
-  } else {
-    document.getElementById("todayStatus").textContent = "Not Marked";
-    document.getElementById("checkInTime").textContent = "--";
-    document.getElementById("checkOutTime").textContent = "--";
-  }
+    if (todayRec) {
+      document.getElementById("todayStatus").textContent = todayRec.status || "Not Marked";
+      document.getElementById("checkInTime").textContent = todayRec.check_in || "--";
+      document.getElementById("checkOutTime").textContent = todayRec.check_out || "--";
+    } else {
+      document.getElementById("todayStatus").textContent = "Not Marked";
+      document.getElementById("checkInTime").textContent = "--";
+      document.getElementById("checkOutTime").textContent = "--";
+    }
 
-  const { data: rows } = await db.from('attendance')
-    .select('*')
-    .eq('user_id', currentUser.user_id)
-    .order('created_at', { ascending: false });
+    const { data: rows } = await db.from('attendance')
+      .select('*')
+      .eq('user_id', currentUser.user_id)
+      .order('created_at', { ascending: false });
 
-  const tbody = document.getElementById("attendanceTable");
-  if (!rows || rows.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No records</td></tr>';
-    return;
-  }
+    const tbody = document.getElementById("attendanceTable");
+    if (!rows || rows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No records</td></tr>';
+      return;
+    }
 
-  let html = "";
-  rows.forEach(r => {
-    html += `<tr><td>${r.date}</td><td>${r.check_in||'--'}</td><td>${r.check_out||'--'}</td><td><span class="badge ${r.status==='COMPLETED'?'badge-green':'badge-orange'}">${r.status}</span></td><td>${r.working_hours||'--'}</td></tr>`;
-  });
-  tbody.innerHTML = html;
-}
-
-function checkIn() { markAttendance("checkin"); }
-function checkOut() { markAttendance("checkout"); }
-
-async function markAttendance(type) {
-  loading(true);
-  const today = new Date().toISOString().slice(0,10);
-  const timeNow = new Date().toLocaleTimeString();
-
-  const { data: record } = await db.from('attendance')
-    .select('*')
-    .eq('user_id', currentUser.user_id)
-    .eq('date', today)
-    .maybeSingle();
-
-  if (type === "checkin") {
-    if (record) { loading(false); alert("Already checked in today!"); return; }
-    await db.from('attendance').insert([{
-      user_id: currentUser.user_id,
-      user_name: currentUser.full_name,
-      date: today,
-      check_in: timeNow,
-      status: 'CHECKED_IN'
-    }]);
-    alert("Checked in successfully!");
-  } else if (type === "checkout") {
-    if (!record) { loading(false); alert("You have not checked in today!"); return; }
-    if (record.status === 'COMPLETED') { loading(false); alert("Already checked out today!"
+    let html = "";
+    rows.forEach(r => {
+      html += `<tr><td>${r.date}</td><td>${r.check_in||'--'}</td><td>${r.check_out||'--'}</td><td><span class="badge ${r.status==='COMPLETED'?'badge-green':'badge-orange'}">${r.status}</span></td><td>${r.working_hours||'--'}</td></tr>`;
+    });
+    tbody.innerHTML = html;
+  } catch(err) 
