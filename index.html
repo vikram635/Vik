@@ -28,12 +28,12 @@ button,input,select{ font-family:inherit; }
 .logo span{ color:#9d7cff; }
 .subtitle{ text-align:center; color:#aaa; margin-bottom:25px; }
 .tabs{ display:flex; gap:8px; margin-bottom:20px; }
-.tabs button{ flex:1; padding:12px; border:0; border-radius:12px; background:rgba(255,255,255,.07); color:white; cursor:pointer; font-size:15px; }
+.tabs button{ flex:1; padding:12px; border:0; border-radius:12px; background:rgba(255,255,255,.07); color:white; cursor:pointer; font-size:15px; font-weight:bold; }
 .tabs button.active{ background:linear-gradient(135deg,var(--purple),var(--blue)); }
 input,select{ width:100%; padding:14px; margin:7px 0; border-radius:12px; border:1px solid rgba(255,255,255,.15); background:rgba(0,0,0,.25); color:white; outline:none; font-size:15px; }
 select option{ background:#101827; color:white; }
-.primary{ width:100%; margin-top:12px; padding:14px; border:0; border-radius:12px; color:white; font-weight:bold; font-size:15px; cursor:pointer; background:linear-gradient(135deg,var(--purple),var(--blue)); }
-.message{ min-height:22px; margin-top:15px; text-align:center; color:#facc15; font-size: 14px; word-break: break-word; }
+.primary{ width:100%; margin-top:12px; padding:14px; border:0; border-radius:12px; color:white; font-weight:bold; font-size:16px; cursor:pointer; background:linear-gradient(135deg,var(--purple),var(--blue)); }
+.message{ min-height:22px; margin-top:15px; text-align:center; color:#facc15; font-size:14px; word-break:break-word; font-weight:bold; }
 
 /* HEADER & NAVIGATION */
 .header{ display:flex; justify-content:space-between; align-items:center; gap:15px; margin-bottom:20px; flex-wrap:wrap; }
@@ -51,7 +51,7 @@ select option{ background:#101827; color:white; }
 
 .actions{ display:grid; grid-template-columns:repeat(2,1fr); gap:15px; margin-top:18px; }
 .action{ padding:25px; text-align:center; }
-.action button{ width:100%; margin-top:17px; padding:13px; border:0; border-radius:12px; color:white; font-weight:bold; cursor:pointer; }
+.action button{ width:100%; margin-top:17px; padding:13px; border:0; border-radius:12px; color:white; font-weight:bold; cursor:pointer; font-size:16px; }
 .checkin{ background:#059669; }
 .checkout{ background:#ea580c; }
 
@@ -97,12 +97,7 @@ th{ color:#aaa; }
 .action-inactive{ background:#ef4444; }
 .action-role{ background:#7c3aed; }
 
-/* MODAL & LOADING */
-.modal{ position:fixed; inset:0; z-index:5000; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(0,0,0,.65); }
-.modal-box{ width:100%; max-width:430px; padding:25px; }
-.modal-buttons{ display:flex; gap:10px; margin-top:15px; }
-.modal-buttons button{ flex:1; }
-
+/* LOADING OVERLAY */
 .loading{ position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.65); }
 .loader{ width:50px; height:50px; border:5px solid rgba(255,255,255,.2); border-top-color:#8b5cf6; border-radius:50%; animation:spin 1s linear infinite; }
 @keyframes spin{ to{ transform:rotate(360deg); } }
@@ -118,32 +113,29 @@ th{ color:#aaa; }
 
 <div id="loading" class="loading hidden"><div class="loader"></div></div>
 
-<!-- AUTH -->
+<!-- AUTH CONTAINER -->
 <div id="authPage" class="container">
   <div class="card auth">
     <div class="logo">VIK4NT<span>.INC</span></div>
-    <div class="subtitle">Attendance System</div>
+    <div class="subtitle">Attendance Management</div>
     <div class="tabs">
-      <button id="loginTab" class="active" onclick="showLogin()">Login</button>
-      <button id="signupTab" onclick="showSignup()">Sign Up</button>
+      <button id="loginTab" class="active" onclick="setAuthMode('login')">Login</button>
+      <button id="signupTab" onclick="setAuthMode('signup')">Sign Up</button>
     </div>
-    <form id="loginForm" onsubmit="login(event)">
-      <input id="loginEmail" type="email" placeholder="Email address" required>
-      <input id="loginPassword" type="password" placeholder="Password" required>
-      <button class="primary" type="submit">Login</button>
-    </form>
-    <form id="signupForm" class="hidden" onsubmit="signup(event)">
-      <input id="signupName" type="text" placeholder="Full name" required>
-      <input id="signupEmail" type="email" placeholder="Email address" required>
-      <input id="signupPhone" type="tel" placeholder="Phone number">
-      <input id="signupPassword" type="password" placeholder="Password (min 6 chars)" minlength="6" required>
-      <button class="primary" type="submit">Create Account</button>
-    </form>
-    <div id="message" class="message"></div>
+
+    <div id="nameFields" class="hidden">
+      <input id="fullName" type="text" placeholder="Full Name">
+      <input id="phone" type="tel" placeholder="Phone Number">
+    </div>
+    <input id="email" type="email" placeholder="Email Address">
+    <input id="password" type="password" placeholder="Password (min 6 chars)">
+    
+    <button id="authBtn" class="primary" onclick="handleAuthAction()">Login</button>
+    <div id="authMsg" class="message"></div>
   </div>
 </div>
 
-<!-- MAIN LAYOUT (DASHBOARD / ADMIN / PROFILE) -->
+<!-- MAIN DASHBOARD APP -->
 <div id="appPage" class="container hidden">
   <div class="header">
     <div><h1>👋 Hi, <span id="userName">User</span></h1></div>
@@ -163,24 +155,24 @@ th{ color:#aaa; }
       <div class="card stat"><small>Check Out</small><strong id="checkOutTime">--</strong></div>
     </div>
     <div class="actions">
-      <div class="card action"><h2>🟢 Check In</h2><button class="checkin" onclick="checkIn()">Check In</button></div>
-      <div class="card action"><h2>🔴 Check Out</h2><button class="checkout" onclick="checkOut()">Check Out</button></div>
+      <div class="card action"><h2>🟢 Check In</h2><button class="checkin" onclick="markAttendance('checkin')">Check In</button></div>
+      <div class="card action"><h2>🔴 Check Out</h2><button class="checkout" onclick="markAttendance('checkout')">Check Out</button></div>
     </div>
     <div class="card history">
       <h2>📋 Attendance History</h2>
       <table>
-        <thead><tr><th>Date</th><th>Check In</th><th>Check Out</th><th>Status</th><th>Hours</th></tr></thead>
-        <tbody id="attendanceTable"><tr><td colspan="5" style="text-align:center;">No records</td></tr></tbody>
+        <thead><tr><th>Date</th><th>Check In</th><th>Check Out</th><th>Status</th></tr></thead>
+        <tbody id="attendanceTable"><tr><td colspan="4" style="text-align:center;">No records found</td></tr></tbody>
       </table>
     </div>
   </div>
 
-  <!-- ADMIN DASHBOARD TAB -->
+  <!-- ADMIN CONTROL TAB -->
   <div id="adminTab" class="hidden">
     <div class="admin-top">
       <div class="admin-title"><h1>👑 System Controls</h1></div>
       <div class="admin-actions">
-        <button class="btn btn-blue" onclick="refreshAdmin()">🔄 Refresh</button>
+        <button class="btn btn-blue" onclick="refreshAdminData()">🔄 Refresh</button>
       </div>
     </div>
 
@@ -203,15 +195,15 @@ th{ color:#aaa; }
     </div>
 
     <div class="card admin-section">
-      <div class="section-header"><h2>📋 Attendance Records</h2></div>
+      <div class="section-header"><h2>📋 Attendance Logs</h2></div>
       <div class="filter-row">
         <input id="attendanceDate" type="date" onchange="loadAdminAttendance()">
         <button class="btn btn-blue" onclick="clearAttendanceFilter()">All Dates</button>
-        <button class="btn btn-green" onclick="downloadAttendanceCSV()" style="margin-left:auto;">📥 Download Excel/CSV</button>
+        <button class="btn btn-green" onclick="downloadAttendanceCSV()" style="margin-left:auto;">📥 Export CSV</button>
       </div>
       <table>
-        <thead><tr><th>Date</th><th>User</th><th>User ID</th><th>Check In</th><th>Check Out</th><th>Status</th><th>Hours</th></tr></thead>
-        <tbody id="adminAttendanceTable"><tr><td colspan="7" style="text-align:center;">Loading records...</td></tr></tbody>
+        <thead><tr><th>Date</th><th>User</th><th>Check In</th><th>Check Out</th><th>Status</th></tr></thead>
+        <tbody id="adminAttendanceTable"><tr><td colspan="5" style="text-align:center;">Loading records...</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -224,39 +216,14 @@ th{ color:#aaa; }
         <h2 id="profileNameDisplay">User Name</h2>
         <span id="profileRoleBadge" class="badge badge-blue">USER</span>
       </div>
-      <form onsubmit="updateProfile(event)">
-        <div class="profile-group">
-          <label>Full Name</label>
-          <input id="profName" type="text" required>
-        </div>
-        <div class="profile-group">
-          <label>Email Address (Read Only)</label>
-          <input id="profEmail" type="email" readonly style="opacity: 0.6; cursor: not-allowed;">
-        </div>
-        <div class="profile-group">
-          <label>Phone Number</label>
-          <input id="profPhone" type="tel">
-        </div>
-        <div class="profile-group">
-          <label>New Password (Leave blank to keep unchanged)</label>
-          <input id="profPassword" type="password" placeholder="••••••••">
-        </div>
-        <button type="submit" class="primary">💾 Save Profile Changes</button>
-      </form>
-      <div id="profileMessage" class="message"></div>
-    </div>
-  </div>
-
-</div>
-
-<!-- MODAL -->
-<div id="confirmModal" class="modal hidden">
-  <div class="card modal-box">
-    <h2 id="modalTitle">Confirm Action</h2>
-    <p id="modalMessage">Are you sure?</p>
-    <div class="modal-buttons">
-      <button class="btn btn-red" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-green" onclick="confirmAction()">Confirm</button>
+      <div>
+        <div class="profile-group"><label>Full Name</label><input id="profName" type="text"></div>
+        <div class="profile-group"><label>Email (Read Only)</label><input id="profEmail" type="email" readonly style="opacity: 0.6;"></div>
+        <div class="profile-group"><label>Phone Number</label><input id="profPhone" type="tel"></div>
+        <div class="profile-group"><label>New Password (Optional)</label><input id="profPassword" type="password" placeholder="••••••••"></div>
+        <button class="primary" onclick="saveProfileChanges()">💾 Save Changes</button>
+      </div>
+      <div id="profileMsg" class="message"></div>
     </div>
   </div>
 </div>
@@ -266,132 +233,125 @@ const SUPABASE_URL = "https://jdetqupmtgrrwzrufhsg.supabase.co";
 const SUPABASE_KEY = "sb_publishable_QVtX3-gxQnXhsZC5tIwV8w_XXOGmmNI";
 let db = null;
 
-let currentUser = JSON.parse(localStorage.getItem("vikram_attendance_user") || "null");
-let allUsers = [];
-let currentAdminAttendance = [];
-let pendingAction = null;
+let authMode = "login";
+let currentUser = JSON.parse(localStorage.getItem("vikant_app_user") || "null");
+let allUsersData = [];
+let adminAttendanceData = [];
 
 window.onload = function() {
   try {
     if (typeof supabase !== 'undefined') {
       db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     } else {
-      message("⚠️ Supabase script not loaded. Check internet connection!");
+      setMsg("⚠️ Supabase SDK Library missed. Check network connection.", true);
       return;
     }
   } catch(e) {
-    message("⚠️ DB Init Error: " + e.message);
+    setMsg("⚠️ Init Error: " + e.message, true);
     return;
   }
 
-  if (currentUser) { navigateUser(); } else { showLogin(); }
+  if (currentUser) {
+    showMainApp();
+  } else {
+    setAuthMode('login');
+  }
 };
 
-function loading(show) { document.getElementById("loading").classList.toggle("hidden", !show); }
-function message(text) { document.getElementById("message").textContent = text || ""; }
-
-function showLogin() {
-  document.getElementById("authPage").classList.remove("hidden");
-  document.getElementById("appPage").classList.add("hidden");
-  document.getElementById("loginForm").classList.remove("hidden");
-  document.getElementById("signupForm").classList.add("hidden");
-  document.getElementById("loginTab").classList.add("active");
-  document.getElementById("signupTab").classList.remove("active");
-  message("");
+function toggleLoading(show) { document.getElementById("loading").classList.toggle("hidden", !show); }
+function setMsg(txt, isErr) {
+  const el = document.getElementById("authMsg");
+  el.textContent = txt || "";
+  el.style.color = isErr ? "#fca5a5" : "#86efac";
 }
 
-function showSignup() {
-  document.getElementById("loginForm").classList.add("hidden");
-  document.getElementById("signupForm").classList.remove("hidden");
-  document.getElementById("signupTab").classList.add("active");
-  document.getElementById("loginTab").classList.remove("active");
-  message("");
+function setAuthMode(mode) {
+  authMode = mode;
+  setMsg("");
+  if (mode === 'signup') {
+    document.getElementById("signupTab").className = "active";
+    document.getElementById("loginTab").className = "";
+    document.getElementById("nameFields").className = "";
+    document.getElementById("authBtn").textContent = "Create Account";
+  } else {
+    document.getElementById("loginTab").className = "active";
+    document.getElementById("signupTab").className = "";
+    document.getElementById("nameFields").className = "hidden";
+    document.getElementById("authBtn").textContent = "Login";
+  }
 }
 
-async function signup(e) {
-  e.preventDefault(); 
-  loading(true);
-  message("");
+async function handleAuthAction() {
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  if (!email || !password) { setMsg("Please fill Email & Password!", true); return; }
+
+  toggleLoading(true);
+  setMsg("");
 
   try {
-    const fullName = document.getElementById("signupName").value.trim();
-    const email = document.getElementById("signupEmail").value.trim();
-    const phone = document.getElementById("signupPhone").value.trim();
-    const password = document.getElementById("signupPassword").value;
+    if (authMode === 'signup') {
+      const fullName = document.getElementById("fullName").value.trim();
+      const phone = document.getElementById("phone").value.trim();
 
-    const { data: existing, error: checkErr } = await db.from('users').select('email').eq('email', email);
-    if (checkErr) throw checkErr;
+      if (!fullName) { toggleLoading(false); setMsg("Please enter Full Name!", true); return; }
 
-    if (existing && existing.length > 0) {
-      loading(false); 
-      message("❌ Email already registered!"); 
-      return;
+      // Check existing email
+      const { data: exist, error: exErr } = await db.from('users').select('email').eq('email', email);
+      if (exErr) throw exErr;
+
+      if (exist && exist.length > 0) {
+        toggleLoading(false);
+        setMsg("❌ Email already registered!", true);
+        return;
+      }
+
+      // First user becomes ADMIN
+      const { count, error: countErr } = await db.from('users').select('*', { count: 'exact', head: true });
+      if (countErr) throw countErr;
+
+      const role = (count === 0) ? 'ADMIN' : 'USER';
+
+      const { error: insErr } = await db.from('users').insert([{
+        full_name: fullName,
+        email: email,
+        phone: phone,
+        password: password,
+        role: role
+      }]);
+
+      if (insErr) throw insErr;
+
+      toggleLoading(false);
+      setMsg("✅ Account Created! Switching to Login...", false);
+      setTimeout(() => { setAuthMode('login'); }, 1500);
+
+    } else {
+      // LOGIN
+      const { data, error } = await db.from('users')
+        .select('*')
+        .eq('email', email)
+        .eq('password', password)
+        .maybeSingle();
+
+      toggleLoading(false);
+
+      if (error) throw error;
+      if (!data) { setMsg("❌ Invalid Email or Password!", true); return; }
+      if (data.status !== "ACTIVE") { setMsg("❌ Account Blocked by Admin!", true); return; }
+
+      currentUser = data;
+      localStorage.setItem("vikant_app_user", JSON.stringify(currentUser));
+      showMainApp();
     }
-
-    const { count, error: countErr } = await db.from('users').select('*', { count: 'exact', head: true });
-    if (countErr) throw countErr;
-
-    const role = (count === 0) ? 'ADMIN' : 'USER';
-
-    const { error: insErr } = await db.from('users').insert([{
-      full_name: fullName, 
-      email: email, 
-      phone: phone, 
-      password: password, 
-      role: role
-    }]);
-
-    if (insErr) throw insErr;
-
-    loading(false);
-    message("✅ Account created! Switching to Login...");
-    document.getElementById("signupForm").reset();
-    setTimeout(showLogin, 1500);
-
   } catch(err) {
-    loading(false);
-    message("❌ " + (err.message || "Signup failed"));
+    toggleLoading(false);
+    setMsg("❌ DB Error: " + (err.message || JSON.stringify(err)), true);
   }
 }
 
-async function login(e) {
-  e.preventDefault(); 
-  loading(true);
-  message("");
-
-  try {
-    const email = document.getElementById("loginEmail").value.trim();
-    const password = document.getElementById("loginPassword").value;
-
-    const { data, error } = await db.from('users')
-      .select('*')
-      .eq('email', email)
-      .eq('password', password)
-      .maybeSingle();
-
-    loading(false);
-
-    if (error) throw error;
-    if (!data) { message("❌ Invalid email or password!"); return; }
-    if (data.status !== "ACTIVE") { message("❌ Your account is blocked!"); return; }
-
-    currentUser = data;
-    localStorage.setItem("vikram_attendance_user", JSON.stringify(currentUser));
-    navigateUser();
-
-  } catch(err) {
-    loading(false);
-    message("❌ " + (err.message || "Login failed"));
-  }
-}
-
-function logout() {
-  currentUser = null;
-  localStorage.removeItem("vikram_attendance_user");
-  showLogin();
-}
-
-function navigateUser() {
+function showMainApp() {
   document.getElementById("authPage").classList.add("hidden");
   document.getElementById("appPage").classList.remove("hidden");
   
@@ -406,7 +366,15 @@ function navigateUser() {
   switchTab('dashboard');
 }
 
-function switchTab(tabName) {
+function logout() {
+  currentUser = null;
+  localStorage.removeItem("vikant_app_user");
+  document.getElementById("appPage").classList.add("hidden");
+  document.getElementById("authPage").classList.remove("hidden");
+  setAuthMode('login');
+}
+
+function switchTab(tab) {
   document.getElementById("dashboardTab").classList.add("hidden");
   document.getElementById("adminTab").classList.add("hidden");
   document.getElementById("profileTab").classList.add("hidden");
@@ -415,18 +383,18 @@ function switchTab(tabName) {
   document.getElementById("navAdmin").classList.remove("active");
   document.getElementById("navProfile").classList.remove("active");
 
-  if (tabName === 'dashboard') {
+  if (tab === 'dashboard') {
     document.getElementById("dashboardTab").classList.remove("hidden");
     document.getElementById("navDashboard").classList.add("active");
     loadUserDashboard();
-  } else if (tabName === 'admin') {
+  } else if (tab === 'admin') {
     document.getElementById("adminTab").classList.remove("hidden");
     document.getElementById("navAdmin").classList.add("active");
-    refreshAdmin();
-  } else if (tabName === 'profile') {
+    refreshAdminData();
+  } else if (tab === 'profile') {
     document.getElementById("profileTab").classList.remove("hidden");
     document.getElementById("navProfile").classList.add("active");
-    loadProfileData();
+    loadProfileDetails();
   }
 }
 
@@ -457,13 +425,13 @@ async function loadUserDashboard() {
 
     const tbody = document.getElementById("attendanceTable");
     if (!rows || rows.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No records</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No records found</td></tr>';
       return;
     }
 
     let html = "";
     rows.forEach(r => {
-      html += `<tr><td>${r.date}</td><td>${r.check_in||'--'}</td><td>${r.check_out||'--'}</td><td><span class="badge ${r.status==='COMPLETED'?'badge-green':'badge-orange'}">${r.status}</span></td><td>${r.working_hours||'--'}</td></tr>`;
+      html += `<tr><td>${r.date}</td><td>${r.check_in||'--'}</td><td>${r.check_out||'--'}</td><td><span class="badge ${r.status==='COMPLETED'?'badge-green':'badge-orange'}">${r.status}</span></td></tr>`;
     });
     tbody.innerHTML = html;
   } catch(err) {
@@ -471,7 +439,41 @@ async function loadUserDashboard() {
   }
 }
 
-function checkIn() { markAttendance("checkin"); }
-function checkOut() { markAttendance("checkout"); }
+async function markAttendance(type) {
+  toggleLoading(true);
+  try {
+    const today = new Date().toISOString().slice(0,10);
+    const timeNow = new Date().toLocaleTimeString();
 
-async f
+    const { data: record } = await db.from('attendance')
+      .select('*')
+      .eq('user_id', currentUser.user_id)
+      .eq('date', today)
+      .maybeSingle();
+
+    if (type === "checkin") {
+      if (record) { toggleLoading(false); alert("Already checked in today!"); return; }
+      await db.from('attendance').insert([{
+        user_id: currentUser.user_id,
+        user_name: currentUser.full_name,
+        date: today,
+        check_in: timeNow,
+        status: 'CHECKED_IN'
+      }]);
+      alert("Checked in successfully!");
+    } else {
+      if (!record) { toggleLoading(false); alert("Please Check-In first!"); return; }
+      if (record.status === 'COMPLETED') { toggleLoading(false); alert("Already checked out today!"); return; }
+
+      await db.from('attendance').update({
+        check_out: timeNow,
+        status: 'COMPLETED'
+      }).eq('attendance_id', record.attendance_id);
+      alert("Checked out successfully!");
+    }
+
+    toggleLoading(false);
+    loadUserDashboard();
+  } catch(err) {
+    toggleLoading(false);
+    alert("E
