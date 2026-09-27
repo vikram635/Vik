@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VIK4NT.INC Portal</title>
-<!-- Supabase SDK JS -->
+<!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{ box-sizing:border-box; margin:0; padding:0; }
@@ -28,7 +28,7 @@ body{ font-family: Arial, sans-serif; background: var(--bg-gradient); background
 
 input, textarea{ width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid var(--border); background: rgba(15, 23, 42, 0.9); color: #fff; font-size: 14px; outline: none; }
 
-button.btn-primary{ width: 100%; padding: 12px; margin-top: 12px; border: none; border-radius: 10px; background: linear-gradient(135deg, #7c3aed, #2563eb); color: #fff; font-weight: bold; cursor: pointer; font-size: 16px; }
+button.btn-primary{ width: 100%; padding: 14px; margin-top: 12px; border: none; border-radius: 10px; background: linear-gradient(135deg, #7c3aed, #2563eb); color: #fff; font-weight: bold; cursor: pointer; font-size: 16px; }
 
 .header{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
 .nav-btns{ display: flex; gap: 8px; flex-wrap: wrap; }
@@ -60,9 +60,9 @@ th{ color: #a78bfa; }
 .video-card{ background: rgba(15, 23, 42, 0.9); border-radius: 14px; border: 1px solid var(--border); padding: 15px; }
 .video-card video, .video-card iframe{ width: 100%; height: 200px; border-radius: 10px; border: none; background: #000; }
 
-.msg{ margin-top: 12px; padding: 10px; border-radius: 8px; font-size: 13px; text-align: center; font-weight: bold; word-break: break-all; }
-.err{ background: rgba(239,68,68,0.3); color: #fca5a5; border: 1px solid rgba(239,68,68,0.5); }
-.succ{ background: rgba(16,185,129,0.3); color: #86efac; border: 1px solid rgba(16,185,129,0.5); }
+.msg{ margin-top: 15px; padding: 12px; border-radius: 10px; font-size: 14px; text-align: center; font-weight: bold; word-break: break-all; }
+.err{ background: rgba(239,68,68,0.3); color: #fca5a5; border: 1px solid #ef4444; }
+.succ{ background: rgba(16,185,129,0.3); color: #86efac; border: 1px solid #10b981; }
 .hidden{ display: none !important; }
 </style>
 </head>
@@ -194,7 +194,7 @@ th{ color: #a78bfa; }
 const SUPABASE_URL = "https://jdetqupmtgrrwzrufhsg.supabase.co";
 const SUPABASE_KEY = "sb_publishable_QVtX3-gxQnXhsZC5tIwV8w_XXOGmmNI";
 let db = null;
-let mode = "login";
+let authMode = "login";
 let currentUser = null;
 
 window.onload = function() {
@@ -207,13 +207,13 @@ window.onload = function() {
         openApp();
       }
     } else {
-      showMsg("authMsg", "Supabase library connection issue!", true);
+      showMsg("authMsg", "Supabase library connectivity issue!", true);
     }
   } catch(e) { console.error(e); }
 };
 
 function switchAuth(m) {
-  mode = m;
+  authMode = m;
   hideMsg("authMsg");
   if (m === 'signup') {
     document.getElementById("tabSignup").className = "active";
@@ -235,6 +235,7 @@ function showMsg(id, txt, isErr) {
   el.className = "msg " + (isErr ? "err" : "succ");
   el.classList.remove("hidden");
 }
+
 function hideMsg(id) { 
   const el = document.getElementById(id);
   if(el) el.classList.add("hidden"); 
@@ -244,17 +245,26 @@ async function handleAuth() {
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
 
-  if (!email || !password) { showMsg("authMsg", "Email aur Password dono bharein!", true); return; }
+  if (!email || !password) { 
+    showMsg("authMsg", "⚠️ Email aur Password bharein!", true); 
+    return; 
+  }
 
   const btn = document.getElementById("btnAuth");
   btn.disabled = true;
-  btn.textContent = "Processing...";
+  btn.textContent = "Checking...";
+  showMsg("authMsg", "Connecting to database...", false);
 
   try {
-    if (mode === 'signup') {
+    if (authMode === 'signup') {
       const fullName = document.getElementById("fullName").value.trim();
       const phone = document.getElementById("phone").value.trim();
-      if (!fullName) { showMsg("authMsg", "Apna naam darj karein!", true); btn.disabled = false; btn.textContent = "Create Account"; return; }
+      if (!fullName) { 
+        showMsg("authMsg", "⚠️ Apna naam bharein!", true); 
+        btn.disabled = false; 
+        btn.textContent = "Create Account"; 
+        return; 
+      }
 
       const { count } = await db.from('users').select('*', { count: 'exact', head: true });
       const userRole = (count === 0) ? 'ADMIN' : 'USER';
@@ -267,9 +277,9 @@ async function handleAuth() {
       btn.textContent = "Create Account";
 
       if (error) {
-        showMsg("authMsg", "Signup Fail: " + error.message, true);
+        showMsg("authMsg", "❌ Signup Error: " + error.message, true);
       } else {
-        showMsg("authMsg", "✅ Account बन गया! Opening...", false);
+        showMsg("authMsg", "✅ Account बन गया! Opening dashboard...", false);
         currentUser = data[0];
         localStorage.setItem("app_current_user", JSON.stringify(currentUser));
         setTimeout(openApp, 500);
@@ -284,19 +294,20 @@ async function handleAuth() {
       btn.textContent = "Login";
 
       if (error) {
-        showMsg("authMsg", "Error: " + error.message, true);
+        showMsg("authMsg", "❌ Login Error: " + error.message, true);
       } else if (!data || data.length === 0) {
         showMsg("authMsg", "❌ Galat Email ya Password!", true);
       } else {
+        showMsg("authMsg", "✅ Successful! Opening...", false);
         currentUser = data[0];
         localStorage.setItem("app_current_user", JSON.stringify(currentUser));
-        openApp();
+        setTimeout(openApp, 300);
       }
     }
   } catch(err) {
     btn.disabled = false;
-    btn.textContent = (mode === 'signup') ? "Create Account" : "Login";
-    showMsg("authMsg", "Error: " + err.message, true);
+    btn.textContent = (authMode === 'signup') ? "Create Account" : "Login";
+    showMsg("authMsg", "❌ Error: " + err.message, true);
   }
 }
 
@@ -400,7 +411,6 @@ async function loadUserAttendance() {
   } catch(e) { console.error(e); }
 }
 
-// FORMAT YOUTUBE EMBED
 function getEmbedUrl(url) {
   if(!url) return "";
   if(url.includes("embed/")) return url;
@@ -448,7 +458,7 @@ async function loadVideos() {
 
     let html = "";
     data.forEach(v => {
-      let player = v.video_url.includes("youtube") || v.video_url.includes("embed") ?
+      let player = (v.video_url.includes("youtube") || v.video_url.includes("embed")) ?
         `<iframe src="${v.video_url}" allowfullscreen></iframe>` :
         `<video controls src="${v.video_url}"></video>`;
 
@@ -466,8 +476,4 @@ function loadProfile() {
 
 async function updateProfile() {
   const name = document.getElementById("profName").value.trim();
-  const phone = document.getElementById("profPhone").value.trim();
-  const pass = document.getElementById("profPass").value;
-
-  let updatePayload = { full_name: name, phone: phone };
-  if(pass) updatePayload.password =
+  const phone = document.getElementByI
