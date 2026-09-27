@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>VIK4NT.INC Attendance</title>
+<!-- Supabase JS Client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{ box-sizing:border-box; margin:0; padding:0; }
 :root{
@@ -33,11 +35,15 @@ select option{ background:#101827; color:white; }
 .primary{ width:100%; margin-top:12px; padding:14px; border:0; border-radius:12px; color:white; font-weight:bold; font-size:15px; cursor:pointer; background:linear-gradient(135deg,var(--purple),var(--blue)); }
 .message{ min-height:22px; margin-top:15px; text-align:center; color:#facc15; }
 
-/* HEADER & DASHBOARD */
-.header{ display:flex; justify-content:space-between; align-items:center; gap:15px; margin-bottom:20px; }
+/* HEADER & NAVIGATION */
+.header{ display:flex; justify-content:space-between; align-items:center; gap:15px; margin-bottom:20px; flex-wrap:wrap; }
 .header h1{ font-size:25px; }
-.logout{ padding:11px 18px; border:0; border-radius:11px; color:white; background:var(--red); cursor:pointer; font-weight:bold; }
+.nav-btns{ display:flex; gap:10px; align-items:center; }
+.btn-nav{ padding:10px 16px; border:0; border-radius:11px; color:white; background:rgba(255,255,255,.1); cursor:pointer; font-weight:bold; }
+.btn-nav.active{ background:var(--purple); }
+.logout{ padding:10px 16px; border:0; border-radius:11px; color:white; background:var(--red); cursor:pointer; font-weight:bold; }
 
+/* DASHBOARD & STATS */
 .stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:15px; }
 .stat{ padding:22px; }
 .stat small{ color:#aaa; }
@@ -59,6 +65,13 @@ th{ color:#aaa; }
 .badge-red{ background:rgba(239,68,68,.2); color:#fca5a5; }
 .badge-blue{ background:rgba(59,130,246,.2); color:#93c5fd; }
 .badge-orange{ background:rgba(249,115,22,.2); color:#fdba74; }
+
+/* PROFILE SECTION */
+.profile-card{ max-width:600px; margin:20px auto; padding:30px; }
+.profile-header{ text-align:center; margin-bottom:20px; }
+.profile-avatar{ width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg,var(--purple),var(--blue)); display:flex; align-items:center; justify-content:center; font-size:32px; font-weight:bold; margin:0 auto 12px; }
+.profile-group{ margin-bottom:15px; }
+.profile-group label{ display:block; font-size:13px; color:#aaa; margin-bottom:4px; }
 
 /* ADMIN */
 .admin-top{ display:flex; justify-content:space-between; align-items:center; gap:15px; margin-bottom:20px; }
@@ -130,70 +143,110 @@ th{ color:#aaa; }
   </div>
 </div>
 
-<!-- USER DASHBOARD -->
-<div id="dashboardPage" class="container hidden">
+<!-- MAIN LAYOUT (DASHBOARD / ADMIN / PROFILE) -->
+<div id="appPage" class="container hidden">
   <div class="header">
-    <div><h1>👋 Welcome, <span id="userName">User</span></h1></div>
-    <button class="logout" onclick="logout()">Logout</button>
-  </div>
-  <div class="stats">
-    <div class="card stat"><small>Today's Status</small><strong id="todayStatus">Not Marked</strong></div>
-    <div class="card stat"><small>Check In</small><strong id="checkInTime">--</strong></div>
-    <div class="card stat"><small>Check Out</small><strong id="checkOutTime">--</strong></div>
-  </div>
-  <div class="actions">
-    <div class="card action"><h2>🟢 Check In</h2><button class="checkin" onclick="checkIn()">Check In</button></div>
-    <div class="card action"><h2>🔴 Check Out</h2><button class="checkout" onclick="checkOut()">Check Out</button></div>
-  </div>
-  <div class="card history">
-    <h2>📋 Attendance History</h2>
-    <table>
-      <thead><tr><th>Date</th><th>Check In</th><th>Check Out</th><th>Status</th><th>Hours</th></tr></thead>
-      <tbody id="attendanceTable"><tr><td colspan="5" style="text-align:center;">No records</td></tr></tbody>
-    </table>
-  </div>
-</div>
-
-<!-- ADMIN DASHBOARD -->
-<div id="adminPage" class="container hidden">
-  <div class="admin-top">
-    <div class="admin-title"><h1>👑 Admin Panel</h1><p>VIK4NT.INC System Controls</p></div>
-    <div class="admin-actions">
-      <button class="btn btn-blue" onclick="refreshAdmin()">🔄 Refresh</button>
-      <button class="btn btn-red" onclick="logout()">Logout</button>
+    <div><h1>👋 Hi, <span id="userName">User</span></h1></div>
+    <div class="nav-btns">
+      <button id="navDashboard" class="btn-nav active" onclick="switchTab('dashboard')">🏠 Dashboard</button>
+      <button id="navAdmin" class="btn-nav hidden" onclick="switchTab('admin')">👑 Admin Panel</button>
+      <button id="navProfile" class="btn-nav" onclick="switchTab('profile')">👤 Profile</button>
+      <button class="logout" onclick="logout()">Logout</button>
     </div>
   </div>
 
-  <div class="admin-stats">
-    <div class="card admin-stat"><small>Total Users</small><strong id="statTotalUsers">0</strong></div>
-    <div class="card admin-stat"><small>Active Users</small><strong id="statActiveUsers">0</strong></div>
-    <div class="card admin-stat"><small>Today Attendance</small><strong id="statToday">0</strong></div>
-    <div class="card admin-stat"><small>Completed Today</small><strong id="statCompleted">0</strong></div>
+  <!-- USER DASHBOARD TAB -->
+  <div id="dashboardTab">
+    <div class="stats">
+      <div class="card stat"><small>Today's Status</small><strong id="todayStatus">Not Marked</strong></div>
+      <div class="card stat"><small>Check In</small><strong id="checkInTime">--</strong></div>
+      <div class="card stat"><small>Check Out</small><strong id="checkOutTime">--</strong></div>
+    </div>
+    <div class="actions">
+      <div class="card action"><h2>🟢 Check In</h2><button class="checkin" onclick="checkIn()">Check In</button></div>
+      <div class="card action"><h2>🔴 Check Out</h2><button class="checkout" onclick="checkOut()">Check Out</button></div>
+    </div>
+    <div class="card history">
+      <h2>📋 Attendance History</h2>
+      <table>
+        <thead><tr><th>Date</th><th>Check In</th><th>Check Out</th><th>Status</th><th>Hours</th></tr></thead>
+        <tbody id="attendanceTable"><tr><td colspan="5" style="text-align:center;">No records</td></tr></tbody>
+      </table>
+    </div>
   </div>
 
-  <div class="card admin-section">
-    <div class="section-header">
-      <h2>👥 User Management</h2>
-      <input id="userSearch" class="search" type="text" placeholder="🔎 Search Users..." oninput="filterUsers()">
+  <!-- ADMIN DASHBOARD TAB -->
+  <div id="adminTab" class="hidden">
+    <div class="admin-top">
+      <div class="admin-title"><h1>👑 System Controls</h1></div>
+      <div class="admin-actions">
+        <button class="btn btn-blue" onclick="refreshAdmin()">🔄 Refresh</button>
+      </div>
     </div>
-    <table>
-      <thead><tr><th>User</th><th>Email</th><th>Phone</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
-      <tbody id="usersTable"><tr><td colspan="6" style="text-align:center;">Loading users...</td></tr></tbody>
-    </table>
+
+    <div class="admin-stats">
+      <div class="card admin-stat"><small>Total Users</small><strong id="statTotalUsers">0</strong></div>
+      <div class="card admin-stat"><small>Active Users</small><strong id="statActiveUsers">0</strong></div>
+      <div class="card admin-stat"><small>Today Attendance</small><strong id="statToday">0</strong></div>
+      <div class="card admin-stat"><small>Completed Today</small><strong id="statCompleted">0</strong></div>
+    </div>
+
+    <div class="card admin-section">
+      <div class="section-header">
+        <h2>👥 User Management</h2>
+        <input id="userSearch" class="search" type="text" placeholder="🔎 Search Users..." oninput="filterUsers()">
+      </div>
+      <table>
+        <thead><tr><th>User</th><th>Email</th><th>Phone</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="usersTable"><tr><td colspan="6" style="text-align:center;">Loading users...</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="card admin-section">
+      <div class="section-header"><h2>📋 Attendance Records</h2></div>
+      <div class="filter-row">
+        <input id="attendanceDate" type="date" onchange="loadAdminAttendance()">
+        <button class="btn btn-blue" onclick="clearAttendanceFilter()">All Dates</button>
+        <button class="btn btn-green" onclick="downloadAttendanceCSV()" style="margin-left:auto;">📥 Download Excel/CSV</button>
+      </div>
+      <table>
+        <thead><tr><th>Date</th><th>User</th><th>User ID</th><th>Check In</th><th>Check Out</th><th>Status</th><th>Hours</th></tr></thead>
+        <tbody id="adminAttendanceTable"><tr><td colspan="7" style="text-align:center;">Loading records...</td></tr></tbody>
+      </table>
+    </div>
   </div>
 
-  <div class="card admin-section">
-    <div class="section-header"><h2>📋 Attendance Records</h2></div>
-    <div class="filter-row">
-      <input id="attendanceDate" type="date" onchange="loadAdminAttendance()">
-      <button class="btn btn-blue" onclick="clearAttendanceFilter()">All Dates</button>
-      <button class="btn btn-green" onclick="downloadAttendanceCSV()" style="margin-left:auto;">📥 Download Excel/CSV</button>
+  <!-- PROFILE TAB -->
+  <div id="profileTab" class="hidden">
+    <div class="card profile-card">
+      <div class="profile-header">
+        <div id="profileAvatar" class="profile-avatar">U</div>
+        <h2 id="profileNameDisplay">User Name</h2>
+        <span id="profileRoleBadge" class="badge badge-blue">USER</span>
+      </div>
+      <form onsubmit="updateProfile(event)">
+        <div class="profile-group">
+          <label>Full Name</label>
+          <input id="profName" type="text" required>
+        </div>
+        <div class="profile-group">
+          <label>Email Address (Read Only)</label>
+          <input id="profEmail" type="email" readonly style="opacity: 0.6; cursor: not-allowed;">
+        </div>
+        <div class="profile-group">
+          <label>Phone Number</label>
+          <input id="profPhone" type="tel">
+        </div>
+        <div class="profile-group">
+          <label>New Password (Leave blank to keep unchanged)</label>
+          <input id="profPassword" type="password" placeholder="••••••••">
+        </div>
+        <button type="submit" class="primary">💾 Save Profile Changes</button>
+      </form>
+      <div id="profileMessage" class="message"></div>
     </div>
-    <table>
-      <thead><tr><th>Date</th><th>User</th><th>User ID</th><th>Check In</th><th>Check Out</th><th>Status</th><th>Hours</th></tr></thead>
-      <tbody id="adminAttendanceTable"><tr><td colspan="7" style="text-align:center;">Loading records...</td></tr></tbody>
-    </table>
   </div>
+
 </div>
 
 <!-- MODAL -->
@@ -209,14 +262,18 @@ th{ color:#aaa; }
 </div>
 
 <script>
-let sessionToken = localStorage.getItem("vikram_attendance_token") || "";
+// Supabase Credentials
+const SUPABASE_URL = "https://jdetqupmtgrrwzrufhsg.supabase.co";
+const SUPABASE_KEY = "sb_publishable_QVtX3-gxQnXhsZC5tIwV8w_XXOGmmNI";
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 let currentUser = JSON.parse(localStorage.getItem("vikram_attendance_user") || "null");
 let allUsers = [];
 let currentAdminAttendance = [];
 let pendingAction = null;
 
 window.onload = function() {
-  if (sessionToken && currentUser) { navigateUser(); } else { showLogin(); }
+  if (currentUser) { navigateUser(); } else { showLogin(); }
 };
 
 function loading(show) { document.getElementById("loading").classList.toggle("hidden", !show); }
@@ -224,8 +281,7 @@ function message(text) { document.getElementById("message").textContent = text |
 
 function showLogin() {
   document.getElementById("authPage").classList.remove("hidden");
-  document.getElementById("dashboardPage").classList.add("hidden");
-  document.getElementById("adminPage").classList.add("hidden");
+  document.getElementById("appPage").classList.add("hidden");
   document.getElementById("loginForm").classList.remove("hidden");
   document.getElementById("signupForm").classList.add("hidden");
   document.getElementById("loginTab").classList.add("active");
@@ -241,223 +297,158 @@ function showSignup() {
   message("");
 }
 
-function signup(e) {
+async function signup(e) {
   e.preventDefault(); loading(true);
-  const data = {
-    fullName: document.getElementById("signupName").value.trim(),
-    email: document.getElementById("signupEmail").value.trim(),
-    phone: document.getElementById("signupPhone").value.trim(),
-    password: document.getElementById("signupPassword").value
-  };
-  google.script.run
-    .withSuccessHandler(res => {
-      loading(false);
-      if (!res.success) { message(res.message); return; }
-      message("✅ Account created. Please login.");
-      document.getElementById("signupForm").reset();
-      setTimeout(showLogin, 1000);
-    })
-    .withFailureHandler(err => { loading(false); message(err.message); })
-    .signup(data);
+  const fullName = document.getElementById("signupName").value.trim();
+  const email = document.getElementById("signupEmail").value.trim();
+  const phone = document.getElementById("signupPhone").value.trim();
+  const password = document.getElementById("signupPassword").value;
+
+  const { data: existing } = await db.from('users').select('email').eq('email', email);
+  if (existing && existing.length > 0) {
+    loading(false); message("Email already registered!"); return;
+  }
+
+  const { count } = await db.from('users').select('*', { count: 'exact', head: true });
+  const role = (count === 0) ? 'ADMIN' : 'USER';
+
+  const { error } = await db.from('users').insert([{
+    full_name: fullName, email: email, phone: phone, password: password, role: role
+  }]);
+
+  loading(false);
+  if (error) { message(error.message); return; }
+  message("✅ Account created. Please login.");
+  document.getElementById("signupForm").reset();
+  setTimeout(showLogin, 1000);
 }
 
-function login(e) {
+async function login(e) {
   e.preventDefault(); loading(true);
-  const data = {
-    email: document.getElementById("loginEmail").value.trim(),
-    password: document.getElementById("loginPassword").value
-  };
-  google.script.run
-    .withSuccessHandler(res => {
-      loading(false);
-      if (!res.success) { message(res.message); return; }
-      sessionToken = res.data.token;
-      currentUser = res.data.user;
-      localStorage.setItem("vikram_attendance_token", sessionToken);
-      localStorage.setItem("vikram_attendance_user", JSON.stringify(currentUser));
-      navigateUser();
-    })
-    .withFailureHandler(err => { loading(false); message(err.message); })
-    .login(data);
+  const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPassword").value;
+
+  const { data, error } = await db.from('users')
+    .select('*')
+    .eq('email', email)
+    .eq('password', password)
+    .maybeSingle();
+
+  loading(false);
+  if (error || !data) { message("Invalid email or password!"); return; }
+  if (data.status !== "ACTIVE") { message("Your account is blocked!"); return; }
+
+  currentUser = data;
+  localStorage.setItem("vikram_attendance_user", JSON.stringify(currentUser));
+  navigateUser();
 }
 
 function logout() {
-  loading(true);
-  google.script.run.withSuccessHandler(cleanup).withFailureHandler(cleanup).logout(sessionToken);
-}
-
-function cleanup() {
-  sessionToken = ""; currentUser = null;
-  localStorage.removeItem("vikram_attendance_token");
+  currentUser = null;
   localStorage.removeItem("vikram_attendance_user");
-  loading(false); showLogin();
+  showLogin();
 }
 
 function navigateUser() {
   document.getElementById("authPage").classList.add("hidden");
+  document.getElementById("appPage").classList.remove("hidden");
+  
+  document.getElementById("userName").textContent = currentUser?.full_name || "User";
+  
   if (currentUser && currentUser.role === "ADMIN") {
-    document.getElementById("adminPage").classList.remove("hidden");
-    document.getElementById("dashboardPage").classList.add("hidden");
-    refreshAdmin();
+    document.getElementById("navAdmin").classList.remove("hidden");
   } else {
-    document.getElementById("dashboardPage").classList.remove("hidden");
-    document.getElementById("adminPage").classList.add("hidden");
-    document.getElementById("userName").textContent = currentUser?.fullName || "User";
+    document.getElementById("navAdmin").classList.add("hidden");
+  }
+
+  switchTab('dashboard');
+}
+
+function switchTab(tabName) {
+  document.getElementById("dashboardTab").classList.add("hidden");
+  document.getElementById("adminTab").classList.add("hidden");
+  document.getElementById("profileTab").classList.add("hidden");
+
+  document.getElementById("navDashboard").classList.remove("active");
+  document.getElementById("navAdmin").classList.remove("active");
+  document.getElementById("navProfile").classList.remove("active");
+
+  if (tabName === 'dashboard') {
+    document.getElementById("dashboardTab").classList.remove("hidden");
+    document.getElementById("navDashboard").classList.add("active");
     loadUserDashboard();
+  } else if (tabName === 'admin') {
+    document.getElementById("adminTab").classList.remove("hidden");
+    document.getElementById("navAdmin").classList.add("active");
+    refreshAdmin();
+  } else if (tabName === 'profile') {
+    document.getElementById("profileTab").classList.remove("hidden");
+    document.getElementById("navProfile").classList.add("active");
+    loadProfileData();
   }
 }
 
-function loadUserDashboard() {
-  google.script.run.withSuccessHandler(res => {
-    if (res.success && res.data) {
-      document.getElementById("todayStatus").textContent = res.data.status || "Not Marked";
-      document.getElementById("checkInTime").textContent = res.data.checkIn || "--";
-      document.getElementById("checkOutTime").textContent = res.data.checkOut || "--";
-    }
-  }).getTodayAttendance(sessionToken);
+async function loadUserDashboard() {
+  const today = new Date().toISOString().slice(0,10);
+  
+  const { data: todayRec } = await db.from('attendance')
+    .select('*')
+    .eq('user_id', currentUser.user_id)
+    .eq('date', today)
+    .maybeSingle();
 
-  google.script.run.withSuccessHandler(res => {
-    const tbody = document.getElementById("attendanceTable");
-    if (!res.success || !res.data.rows.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No records</td></tr>'; return; }
-    let html = "";
-    res.data.rows.forEach(r => {
-      html += `<tr><td>${r.date}</td><td>${r.checkIn||'--'}</td><td>${r.checkOut||'--'}</td><td><span class="badge ${r.status==='COMPLETED'?'badge-green':'badge-orange'}">${r.status}</span></td><td>${r.workingHours||'--'}</td></tr>`;
-    });
-    tbody.innerHTML = html;
-  }).getAttendance(sessionToken);
-}
+  if (todayRec) {
+    document.getElementById("todayStatus").textContent = todayRec.status || "Not Marked";
+    document.getElementById("checkInTime").textContent = todayRec.check_in || "--";
+    document.getElementById("checkOutTime").textContent = todayRec.check_out || "--";
+  } else {
+    document.getElementById("todayStatus").textContent = "Not Marked";
+    document.getElementById("checkInTime").textContent = "--";
+    document.getElementById("checkOutTime").textContent = "--";
+  }
 
-function checkIn() { markType("checkin"); }
-function checkOut() { markType("checkout"); }
+  const { data: rows } = await db.from('attendance')
+    .select('*')
+    .eq('user_id', currentUser.user_id)
+    .order('created_at', { ascending: false });
 
-function markType(type) {
-  loading(true);
-  google.script.run
-    .withSuccessHandler(res => { loading(false); alert(res.message); if(res.success) loadUserDashboard(); })
-    .withFailureHandler(err => { loading(false); alert(err.message); })
-    .markAttendance({ type: type }, sessionToken);
-}
+  const tbody = document.getElementById("attendanceTable");
+  if (!rows || rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No records</td></tr>';
+    return;
+  }
 
-function refreshAdmin() {
-  google.script.run.withSuccessHandler(res => {
-    if (res.success && res.data) {
-      document.getElementById("statTotalUsers").textContent = res.data.totalUsers || 0;
-      document.getElementById("statActiveUsers").textContent = res.data.activeUsers || 0;
-      document.getElementById("statToday").textContent = res.data.todayAttendance || 0;
-      document.getElementById("statCompleted").textContent = res.data.completedToday || 0;
-    }
-  }).getAdminStats(sessionToken);
-
-  loadAdminUsers();
-  loadAdminAttendance();
-}
-
-function loadAdminUsers() {
-  google.script.run.withSuccessHandler(res => {
-    if (res.success && res.data) { allUsers = res.data.users; renderUsers(allUsers); }
-  }).getUsers(sessionToken);
-}
-
-function renderUsers(users) {
-  const tbody = document.getElementById("usersTable");
-  if (!users.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No users</td></tr>'; return; }
   let html = "";
-  users.forEach(u => {
-    const isSelf = currentUser && currentUser.userId === u.userId;
-    const nextStatus = u.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
-    const nextRole = u.role === "ADMIN" ? "USER" : "ADMIN";
-
-    html += `<tr>
-      <td><b>${u.fullName}</b><br><small style="color:#aaa;">${u.userId}</small></td>
-      <td>${u.email}</td>
-      <td>${u.phone || '--'}</td>
-      <td><span class="badge badge-blue">${u.role}</span></td>
-      <td><span class="badge ${u.status === 'ACTIVE' ? 'badge-green' : 'badge-red'}">${u.status}</span></td>
-      <td>
-        ${isSelf ? '<small style="color:#aaa;">Self</small>' : `
-          <button class="action-mini ${u.status === 'ACTIVE' ? 'action-inactive' : 'action-active'}" onclick="promptAction('status','${u.userId}','${nextStatus}','${u.fullName}')">${u.status === 'ACTIVE' ? 'Block' : 'Unblock'}</button>
-          <button class="action-mini action-role" onclick="promptAction('role','${u.userId}','${nextRole}','${u.fullName}')">Make ${nextRole}</button>
-        `}
-      </td>
-    </tr>`;
+  rows.forEach(r => {
+    html += `<tr><td>${r.date}</td><td>${r.check_in||'--'}</td><td>${r.check_out||'--'}</td><td><span class="badge ${r.status==='COMPLETED'?'badge-green':'badge-orange'}">${r.status}</span></td><td>${r.working_hours||'--'}</td></tr>`;
   });
   tbody.innerHTML = html;
 }
 
-function filterUsers() {
-  const q = document.getElementById("userSearch").value.toLowerCase().trim();
-  if (!q) return renderUsers(allUsers);
-  renderUsers(allUsers.filter(u => u.fullName.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || String(u.phone).includes(q)));
-}
+function checkIn() { markAttendance("checkin"); }
+function checkOut() { markAttendance("checkout"); }
 
-function loadAdminAttendance() {
-  const dateVal = document.getElementById("attendanceDate").value;
-  google.script.run.withSuccessHandler(res => {
-    const tbody = document.getElementById("adminAttendanceTable");
-    if (!res.success || !res.data.rows.length) { 
-      currentAdminAttendance = [];
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No records found</td></tr>'; 
-      return; 
-    }
-    currentAdminAttendance = res.data.rows;
-    let html = "";
-    res.data.rows.forEach(r => {
-      html += `<tr><td>${r.date}</td><td><b>${r.userName}</b></td><td><small style="color:#aaa;">${r.userId}</small></td><td>${r.checkIn||'--'}</td><td>${r.checkOut||'--'}</td><td><span class="badge ${r.status==='COMPLETED'?'badge-green':'badge-orange'}">${r.status}</span></td><td>${r.workingHours||'--'}</td></tr>`;
-    });
-    tbody.innerHTML = html;
-  }).getAllAttendance(sessionToken, dateVal);
-}
-
-function clearAttendanceFilter() {
-  document.getElementById("attendanceDate").value = "";
-  loadAdminAttendance();
-}
-
-function downloadAttendanceCSV() {
-  if (!currentAdminAttendance || currentAdminAttendance.length === 0) {
-    alert("No attendance records available to download.");
-    return;
-  }
-  let csvContent = "data:text/csv;charset=utf-8,";
-  csvContent += "Date,User Name,User ID,Check In,Check Out,Status,Working Hours\n";
-
-  currentAdminAttendance.forEach(r => {
-    let row = `"${r.date}","${r.userName}","${r.userId}","${r.checkIn||''}","${r.checkOut||''}","${r.status||''}","${r.workingHours||''}"`;
-    csvContent += row + "\n";
-  });
-
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", `Attendance_Report_${new Date().toISOString().slice(0,10)}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
-
-function promptAction(type, userId, value, name) {
-  pendingAction = { type: type, userId: userId, value: value };
-  document.getElementById("modalTitle").textContent = type === "status" ? "User Status" : "User Role";
-  document.getElementById("modalMessage").textContent = `Change ${name}'s ${type} to ${value}?`;
-  document.getElementById("confirmModal").classList.remove("hidden");
-}
-
-function closeModal() { document.getElementById("confirmModal").classList.add("hidden"); pendingAction = null; }
-
-function confirmAction() {
-  if (!pendingAction) return;
+async function markAttendance(type) {
   loading(true);
-  const callback = res => {
-    loading(false); closeModal(); alert(res.message);
-    if (res.success) { refreshAdmin(); }
-  };
+  const today = new Date().toISOString().slice(0,10);
+  const timeNow = new Date().toLocaleTimeString();
 
-  if (pendingAction.type === "status") {
-    google.script.run.withSuccessHandler(callback).updateUserStatus(sessionToken, pendingAction.userId, pendingAction.value);
-  } else {
-    google.script.run.withSuccessHandler(callback).updateUserRole(sessionToken, pendingAction.userId, pendingAction.value);
-  }
-}
-</script>
-</body>
-</html>
+  const { data: record } = await db.from('attendance')
+    .select('*')
+    .eq('user_id', currentUser.user_id)
+    .eq('date', today)
+    .maybeSingle();
+
+  if (type === "checkin") {
+    if (record) { loading(false); alert("Already checked in today!"); return; }
+    await db.from('attendance').insert([{
+      user_id: currentUser.user_id,
+      user_name: currentUser.full_name,
+      date: today,
+      check_in: timeNow,
+      status: 'CHECKED_IN'
+    }]);
+    alert("Checked in successfully!");
+  } else if (type === "checkout") {
+    if (!record) { loading(false); alert("You have not checked in today!"); return; }
+    if (record.status === 'COMPLETED') { loading(false); alert("Already checked out today!"
