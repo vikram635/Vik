@@ -616,16 +616,16 @@ async function addVideo() {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
 
-      const { error: upErr } = await db.storage.from('videos').upload(fileName, file);
+      const { error: upErr } = await db.storage.from('Vikram').upload(fileName, file);
       if (upErr) {
-        alert("Upload Error: " + upErr.message + "\n\nMake sure a public Storage bucket named 'videos' exists in Supabase.");
+        alert("Upload Error: " + upErr.message + "\n\nMake sure a public Storage bucket named 'Vikram' exists in Supabase.");
         btn.disabled = false;
         btn.textContent = "Save Video";
         document.getElementById("vUploadMsg").textContent = "";
         return;
       }
 
-      const { data: urlData } = db.storage.from('videos').getPublicUrl(fileName);
+      const { data: urlData } = db.storage.from('Vikram').getPublicUrl(fileName);
       u = urlData.publicUrl;
       document.getElementById("vUploadMsg").textContent = "";
     } else {
