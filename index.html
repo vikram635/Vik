@@ -100,6 +100,7 @@ th{ color: #a78bfa; }
     <div class="nav-btns">
       <button id="nbDash" class="nav-btn active" onclick="showTab('dash')">🏠 Attendance</button>
       <button id="nbLearn" class="nav-btn" onclick="showTab('learn')">📚 Learning</button>
+      <button id="nbAdmin" class="nav-btn hidden" onclick="showTab('admin')">👑 Admin Panel</button>
       <button id="nbProf" class="nav-btn" onclick="showTab('prof')">👤 Profile</button>
     </div>
 
@@ -137,7 +138,34 @@ th{ color: #a78bfa; }
       <div id="vList">Loading videos...</div>
     </div>
 
-    <!-- TAB 3: PROFILE -->
+    <!-- TAB 3: ADMIN PANEL -->
+    <div id="tabAdmin" class="hidden">
+      <h4 style="color:#a78bfa; margin-bottom:15px;">👑 Admin Controls</h4>
+      
+      <div class="stats-grid">
+        <div class="stat-box"><small>Total Users</small><strong id="aTotalU">0</strong></div>
+        <div class="stat-box"><small>Active Users</small><strong id="aActiveU">0</strong></div>
+        <div class="stat-box"><small>Today Attendance</small><strong id="aTodayAtt">0</strong></div>
+      </div>
+
+      <h5 style="color:#38bdf8; margin-top:15px;">👥 User Management</h5>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Action</th></tr></thead>
+          <tbody id="aUsersTable"><tr><td colspan="5" style="text-align:center;">Loading...</td></tr></tbody>
+        </table>
+      </div>
+
+      <h5 style="color:#38bdf8; margin-top:25px;">📋 All Attendance Logs</h5>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Date</th><th>User</th><th>Check In</th><th>Check Out</th><th>Status</th></tr></thead>
+          <tbody id="aAttTable"><tr><td colspan="5" style="text-align:center;">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 4: PROFILE -->
     <div id="tabProf" class="hidden">
       <h4 style="color:#a78bfa; margin-bottom:15px;">👤 My Profile</h4>
       <div style="max-width:400px;">
@@ -271,6 +299,9 @@ function openDash() {
 
   if(user.role === 'ADMIN') {
     document.getElementById("adminVideoBox").classList.remove("hidden");
+    document.getElementById("nbAdmin").classList.remove("hidden");
+  } else {
+    document.getElementById("nbAdmin").classList.add("hidden");
   }
 
   showTab('dash');
@@ -279,10 +310,12 @@ function openDash() {
 function showTab(t) {
   document.getElementById("tabDash").classList.add("hidden");
   document.getElementById("tabLearn").classList.add("hidden");
+  document.getElementById("tabAdmin").classList.add("hidden");
   document.getElementById("tabProf").classList.add("hidden");
 
   document.getElementById("nbDash").className = "nav-btn";
   document.getElementById("nbLearn").className = "nav-btn";
+  document.getElementById("nbAdmin").className = "nav-btn";
   document.getElementById("nbProf").className = "nav-btn";
 
   if(t === 'dash') {
@@ -293,6 +326,10 @@ function showTab(t) {
     document.getElementById("tabLearn").classList.remove("hidden");
     document.getElementById("nbLearn").className = "nav-btn active";
     loadVideos();
+  } else if(t === 'admin') {
+    document.getElementById("tabAdmin").classList.remove("hidden");
+    document.getElementById("nbAdmin").className = "nav-btn active";
+    loadAdminData();
   } else if(t === 'prof') {
     document.getElementById("tabProf").classList.remove("hidden");
     document.getElementById("nbProf").className = "nav-btn active";
@@ -380,6 +417,44 @@ async function loadVideos() {
   box.innerHTML = html;
 }
 
+async function loadAdminData() {
+  try {
+    const today = new Date().toISOString().slice(0,10);
+    const { count: totalU } = await db.from('users').select('*', { count: 'exact', head: true });
+    const { count: todayAtt } = await db.from('attendance').select('*', { count: 'exact', head: true }).eq('date', today);
+
+    document.getElementById("aTotalU").textContent = totalU || 0;
+    document.getElementById("aActiveU").textContent = totalU || 0;
+    document.getElementById("aTodayAtt").textContent = todayAtt || 0;
+
+    const { data: users } = await db.from('users').select('*').order('created_at', { ascending: false });
+    let uHtml = "";
+    (users||[]).forEach(u => {
+      uHtml += `<tr>
+        <td><b>${u.full_name}</b></td>
+        <td>${u.email}</td>
+        <td>${u.phone||'--'}</td>
+        <td><span class="badge badge-blue">${u.role}</span></td>
+        <td><button class="btn-main" style="padding:4px 8px; font-size:11px; margin:0;" onclick="makeAdmin('${u.user_id}')">Make ADMIN</button></td>
+      </tr>`;
+    });
+    document.getElementById("aUsersTable").innerHTML = uHtml;
+
+    const { data: att } = await db.from('attendance').select('*').order('created_at', { ascending: false });
+    let aHtml = "";
+    (att||[]).forEach(a => {
+      aHtml += `<tr><td>${a.date}</td><td><b>${a.user_name}</b></td><td>${a.check_in||'--'}</td><td>${a.check_out||'--'}</td><td><span class="badge badge-green">${a.status}</span></td></tr>`;
+    });
+    document.getElementById("aAttTable").innerHTML = aHtml;
+  } catch(e) { console.error(e); }
+}
+
+async function makeAdmin(uId) {
+  await db.from('users').update({ role: 'ADMIN' }).eq('user_id', uId);
+  alert("User is now ADMIN!");
+  loadAdminData();
+}
+
 function loadProfile() {
   document.getElementById("pName").value = user.full_name || "";
   document.getElementById("pEmail").value = user.email || "";
@@ -392,28 +467,4 @@ async function updateProfile() {
   const pass = document.getElementById("pPass").value;
 
   let updatePayload = { full_name: name, phone: phone };
-  if(pass) updatePayload.password = pass;
-
-  try {
-    const { data, error } = await db.from('users')
-      .update(updatePayload)
-      .eq('user_id', user.user_id)
-      .select().single();
-
-    if(error) {
-      showBox("pMsg", "Error: " + error.message, true);
-    } else {
-      user = data;
-      localStorage.setItem("v_user", JSON.stringify(user));
-      showBox("pMsg", "✅ Profile updated!", false);
-    }
-  } catch(e) { showBox("pMsg", "Error: " + e.message, true); }
-}
-
-function logout() {
-  localStorage.removeItem("v_user");
-  location.reload();
-}
-</script>
-</body>
-</html>
+  if(pass) updatePayloa
