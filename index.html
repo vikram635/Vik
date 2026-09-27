@@ -2,473 +2,185 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>VIK4NT.INC Attendance</title>
-<!-- Primary & Backup Supabase CDN -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIK4NT.INC Attendance System</title>
+<!-- Supabase JS Library -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-  if (typeof supabase === 'undefined') {
-    document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>');
-  }
-</script>
 <style>
 *{ box-sizing:border-box; margin:0; padding:0; }
-:root{
-  --purple:#7c3aed; --blue:#06b6d4; --green:#10b981; --red:#ef4444; --orange:#f97316;
-  --bg:#070b15; --card:rgba(255,255,255,.07); --border:rgba(255,255,255,.13);
-}
-body{
-  font-family:Arial,Helvetica,sans-serif; min-height:100vh; color:#fff;
-  background:radial-gradient(circle at 10% 10%,#5b21b6 0,transparent 35%),
-             radial-gradient(circle at 90% 90%,#0369a1 0,transparent 35%), var(--bg);
-}
-button,input,select{ font-family:inherit; }
-.hidden{ display:none!important; }
-.container{ width:100%; max-width:1150px; margin:auto; padding:20px; }
-.card{ background:rgba(255,255,255,.07); border:1px solid var(--border); backdrop-filter:blur(20px); border-radius:24px; box-shadow:0 20px 60px rgba(0,0,0,.35); }
-
-/* AUTH */
-.auth{ max-width:430px; margin:7vh auto; padding:30px; }
-.logo{ text-align:center; font-size:30px; font-weight:800; margin-bottom:7px; }
-.logo span{ color:#9d7cff; }
-.subtitle{ text-align:center; color:#aaa; margin-bottom:25px; }
-.tabs{ display:flex; gap:8px; margin-bottom:20px; }
-.tabs button{ flex:1; padding:12px; border:0; border-radius:12px; background:rgba(255,255,255,.07); color:white; cursor:pointer; font-size:15px; }
-.tabs button.active{ background:linear-gradient(135deg,var(--purple),var(--blue)); }
-input,select{ width:100%; padding:14px; margin:7px 0; border-radius:12px; border:1px solid rgba(255,255,255,.15); background:rgba(0,0,0,.25); color:white; outline:none; font-size:15px; }
-select option{ background:#101827; color:white; }
-.primary{ width:100%; margin-top:12px; padding:14px; border:0; border-radius:12px; color:white; font-weight:bold; font-size:15px; cursor:pointer; background:linear-gradient(135deg,var(--purple),var(--blue)); }
-.message{ min-height:22px; margin-top:15px; text-align:center; color:#facc15; font-size: 14px; word-break: break-word; }
-
-/* HEADER & NAVIGATION */
-.header{ display:flex; justify-content:space-between; align-items:center; gap:15px; margin-bottom:20px; flex-wrap:wrap; }
-.header h1{ font-size:25px; }
-.nav-btns{ display:flex; gap:10px; align-items:center; }
-.btn-nav{ padding:10px 16px; border:0; border-radius:11px; color:white; background:rgba(255,255,255,.1); cursor:pointer; font-weight:bold; }
-.btn-nav.active{ background:var(--purple); }
-.logout{ padding:10px 16px; border:0; border-radius:11px; color:white; background:var(--red); cursor:pointer; font-weight:bold; }
-
-/* DASHBOARD & STATS */
-.stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:15px; }
-.stat{ padding:22px; }
-.stat small{ color:#aaa; }
-.stat strong{ display:block; font-size:28px; margin-top:9px; }
-
-.actions{ display:grid; grid-template-columns:repeat(2,1fr); gap:15px; margin-top:18px; }
-.action{ padding:25px; text-align:center; }
-.action button{ width:100%; margin-top:17px; padding:13px; border:0; border-radius:12px; color:white; font-weight:bold; cursor:pointer; }
-.checkin{ background:#059669; }
-.checkout{ background:#ea580c; }
-
-.history{ padding:20px; margin-top:18px; overflow:auto; }
-table{ width:100%; min-width:700px; border-collapse:collapse; }
-th,td{ padding:13px; border-bottom:1px solid rgba(255,255,255,.09); text-align:left; }
-th{ color:#aaa; }
-
-.badge{ display:inline-block; padding:5px 9px; border-radius:999px; font-size:12px; font-weight:bold; }
-.badge-green{ background:rgba(16,185,129,.2); color:#6ee7b7; }
-.badge-red{ background:rgba(239,68,68,.2); color:#fca5a5; }
-.badge-blue{ background:rgba(59,130,246,.2); color:#93c5fd; }
-.badge-orange{ background:rgba(249,115,22,.2); color:#fdba74; }
-
-/* PROFILE SECTION */
-.profile-card{ max-width:600px; margin:20px auto; padding:30px; }
-.profile-header{ text-align:center; margin-bottom:20px; }
-.profile-avatar{ width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg,var(--purple),var(--blue)); display:flex; align-items:center; justify-content:center; font-size:32px; font-weight:bold; margin:0 auto 12px; }
-.profile-group{ margin-bottom:15px; }
-.profile-group label{ display:block; font-size:13px; color:#aaa; margin-bottom:4px; }
-
-/* ADMIN */
-.admin-top{ display:flex; justify-content:space-between; align-items:center; gap:15px; margin-bottom:20px; }
-.admin-title h1{ font-size:28px; }
-.admin-actions{ display:flex; gap:8px; }
-.btn{ border:0; border-radius:11px; padding:11px 15px; color:white; cursor:pointer; font-weight:bold; }
-.btn-blue{ background:#2563eb; }
-.btn-red{ background:var(--red); }
-.btn-green{ background:var(--green); }
-
-.admin-stats{ display:grid; grid-template-columns:repeat(4,1fr); gap:15px; }
-.admin-stat{ padding:20px; }
-.admin-stat strong{ display:block; font-size:30px; margin-top:5px; }
-
-.admin-section{ padding:20px; margin-top:18px; overflow:auto; }
-.section-header{ display:flex; justify-content:space-between; align-items:center; gap:15px; margin-bottom:15px; }
-.search{ max-width:330px; margin:0; }
-.filter-row{ display:flex; gap:10px; align-items:center; margin-bottom:15px; flex-wrap:wrap; }
-.filter-row input{ max-width:190px; margin:0; }
-
-.action-mini{ padding:6px 10px; border:0; border-radius:8px; color:#fff; cursor:pointer; font-size:12px; font-weight:bold; margin:2px; }
-.action-active{ background:#059669; }
-.action-inactive{ background:#ef4444; }
-.action-role{ background:#7c3aed; }
-
-/* MODAL & LOADING */
-.modal{ position:fixed; inset:0; z-index:5000; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(0,0,0,.65); }
-.modal-box{ width:100%; max-width:430px; padding:25px; }
-.modal-buttons{ display:flex; gap:10px; margin-top:15px; }
-.modal-buttons button{ flex:1; }
-
-.loading{ position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.65); }
-.loader{ width:50px; height:50px; border:5px solid rgba(255,255,255,.2); border-top-color:#8b5cf6; border-radius:50%; animation:spin 1s linear infinite; }
-@keyframes spin{ to{ transform:rotate(360deg); } }
-
-@media(max-width:800px){
-  .stats, .actions, .filter-row, .section-header, .admin-top{ flex-direction:column; grid-template-columns:1fr; }
-  .admin-stats{ grid-template-columns:1fr 1fr; }
-}
+body{ font-family:Arial, sans-serif; background:#0f172a; color:#fff; display:flex; justify-content:center; align-items:center; min-height:100vh; padding:20px; }
+.card{ background:#1e293b; border-radius:16px; padding:30px; width:100%; max-width:400px; box-shadow:0 10px 25px rgba(0,0,0,0.5); border:1px solid #334155; }
+h2{ text-align:center; margin-bottom:20px; color:#38bdf8; font-size:24px; }
+.tabs{ display:flex; gap:10px; margin-bottom:20px; }
+.tabs button{ flex:1; padding:10px; border:none; border-radius:8px; background:#334155; color:#fff; font-weight:bold; cursor:pointer; }
+.tabs button.active{ background:#0284c7; }
+input{ width:100%; padding:12px; margin:8px 0; border-radius:8px; border:1px solid #475569; background:#0f172a; color:#fff; font-size:15px; outline:none; }
+button.submit{ width:100%; padding:12px; margin-top:12px; border:none; border-radius:8px; background:#0284c7; color:#fff; font-weight:bold; font-size:16px; cursor:pointer; }
+button.submit:disabled{ background:#475569; cursor:not-allowed; }
+.msg{ margin-top:15px; padding:10px; border-radius:8px; font-size:14px; text-align:center; word-break:break-word; }
+.msg.err{ background:#7f1d1d; color:#fca5a5; }
+.msg.succ{ background:#14532d; color:#86efac; }
+.hidden{ display:none; }
 </style>
 </head>
-
 <body>
 
-<div id="loading" class="loading hidden"><div class="loader"></div></div>
-
-<!-- AUTH -->
-<div id="authPage" class="container">
-  <div class="card auth">
-    <div class="logo">VIK4NT<span>.INC</span></div>
-    <div class="subtitle">Attendance System</div>
-    <div class="tabs">
-      <button id="loginTab" class="active" onclick="showLogin()">Login</button>
-      <button id="signupTab" onclick="showSignup()">Sign Up</button>
-    </div>
-    <form id="loginForm" onsubmit="login(event)">
-      <input id="loginEmail" type="email" placeholder="Email address" required>
-      <input id="loginPassword" type="password" placeholder="Password" required>
-      <button class="primary" type="submit">Login</button>
-    </form>
-    <form id="signupForm" class="hidden" onsubmit="signup(event)">
-      <input id="signupName" type="text" placeholder="Full name" required>
-      <input id="signupEmail" type="email" placeholder="Email address" required>
-      <input id="signupPhone" type="tel" placeholder="Phone number">
-      <input id="signupPassword" type="password" placeholder="Password (min 6 chars)" minlength="6" required>
-      <button class="primary" type="submit">Create Account</button>
-    </form>
-    <div id="message" class="message"></div>
-  </div>
-</div>
-
-<!-- MAIN LAYOUT (DASHBOARD / ADMIN / PROFILE) -->
-<div id="appPage" class="container hidden">
-  <div class="header">
-    <div><h1>👋 Hi, <span id="userName">User</span></h1></div>
-    <div class="nav-btns">
-      <button id="navDashboard" class="btn-nav active" onclick="switchTab('dashboard')">🏠 Dashboard</button>
-      <button id="navAdmin" class="btn-nav hidden" onclick="switchTab('admin')">👑 Admin Panel</button>
-      <button id="navProfile" class="btn-nav" onclick="switchTab('profile')">👤 Profile</button>
-      <button class="logout" onclick="logout()">Logout</button>
-    </div>
+<div class="card">
+  <h2>VIK4NT.INC</h2>
+  <div class="tabs">
+    <button id="tabLogin" class="active" onclick="setMode('login')">Login</button>
+    <button id="tabSignup" onclick="setMode('signup')">Sign Up</button>
   </div>
 
-  <!-- USER DASHBOARD TAB -->
-  <div id="dashboardTab">
-    <div class="stats">
-      <div class="card stat"><small>Today's Status</small><strong id="todayStatus">Not Marked</strong></div>
-      <div class="card stat"><small>Check In</small><strong id="checkInTime">--</strong></div>
-      <div class="card stat"><small>Check Out</small><strong id="checkOutTime">--</strong></div>
+  <form id="authForm" onsubmit="handleAuth(event)">
+    <div id="nameBox" class="hidden">
+      <input id="fullName" type="text" placeholder="Full Name">
+      <input id="phone" type="tel" placeholder="Phone Number">
     </div>
-    <div class="actions">
-      <div class="card action"><h2>🟢 Check In</h2><button class="checkin" onclick="checkIn()">Check In</button></div>
-      <div class="card action"><h2>🔴 Check Out</h2><button class="checkout" onclick="checkOut()">Check Out</button></div>
-    </div>
-    <div class="card history">
-      <h2>📋 Attendance History</h2>
-      <table>
-        <thead><tr><th>Date</th><th>Check In</th><th>Check Out</th><th>Status</th><th>Hours</th></tr></thead>
-        <tbody id="attendanceTable"><tr><td colspan="5" style="text-align:center;">No records</td></tr></tbody>
-      </table>
-    </div>
-  </div>
+    <input id="email" type="email" placeholder="Email Address" required>
+    <input id="password" type="password" placeholder="Password (min 6 chars)" required minlength="6">
+    <button id="btnSubmit" type="submit" class="submit">Login</button>
+  </form>
 
-  <!-- ADMIN DASHBOARD TAB -->
-  <div id="adminTab" class="hidden">
-    <div class="admin-top">
-      <div class="admin-title"><h1>👑 System Controls</h1></div>
-      <div class="admin-actions">
-        <button class="btn btn-blue" onclick="refreshAdmin()">🔄 Refresh</button>
-      </div>
-    </div>
-
-    <div class="admin-stats">
-      <div class="card admin-stat"><small>Total Users</small><strong id="statTotalUsers">0</strong></div>
-      <div class="card admin-stat"><small>Active Users</small><strong id="statActiveUsers">0</strong></div>
-      <div class="card admin-stat"><small>Today Attendance</small><strong id="statToday">0</strong></div>
-      <div class="card admin-stat"><small>Completed Today</small><strong id="statCompleted">0</strong></div>
-    </div>
-
-    <div class="card admin-section">
-      <div class="section-header">
-        <h2>👥 User Management</h2>
-        <input id="userSearch" class="search" type="text" placeholder="🔎 Search Users..." oninput="filterUsers()">
-      </div>
-      <table>
-        <thead><tr><th>User</th><th>Email</th><th>Phone</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
-        <tbody id="usersTable"><tr><td colspan="6" style="text-align:center;">Loading users...</td></tr></tbody>
-      </table>
-    </div>
-
-    <div class="card admin-section">
-      <div class="section-header"><h2>📋 Attendance Records</h2></div>
-      <div class="filter-row">
-        <input id="attendanceDate" type="date" onchange="loadAdminAttendance()">
-        <button class="btn btn-blue" onclick="clearAttendanceFilter()">All Dates</button>
-        <button class="btn btn-green" onclick="downloadAttendanceCSV()" style="margin-left:auto;">📥 Download Excel/CSV</button>
-      </div>
-      <table>
-        <thead><tr><th>Date</th><th>User</th><th>User ID</th><th>Check In</th><th>Check Out</th><th>Status</th><th>Hours</th></tr></thead>
-        <tbody id="adminAttendanceTable"><tr><td colspan="7" style="text-align:center;">Loading records...</td></tr></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- PROFILE TAB -->
-  <div id="profileTab" class="hidden">
-    <div class="card profile-card">
-      <div class="profile-header">
-        <div id="profileAvatar" class="profile-avatar">U</div>
-        <h2 id="profileNameDisplay">User Name</h2>
-        <span id="profileRoleBadge" class="badge badge-blue">USER</span>
-      </div>
-      <form onsubmit="updateProfile(event)">
-        <div class="profile-group">
-          <label>Full Name</label>
-          <input id="profName" type="text" required>
-        </div>
-        <div class="profile-group">
-          <label>Email Address (Read Only)</label>
-          <input id="profEmail" type="email" readonly style="opacity: 0.6; cursor: not-allowed;">
-        </div>
-        <div class="profile-group">
-          <label>Phone Number</label>
-          <input id="profPhone" type="tel">
-        </div>
-        <div class="profile-group">
-          <label>New Password (Leave blank to keep unchanged)</label>
-          <input id="profPassword" type="password" placeholder="••••••••">
-        </div>
-        <button type="submit" class="primary">💾 Save Profile Changes</button>
-      </form>
-      <div id="profileMessage" class="message"></div>
-    </div>
-  </div>
-
-</div>
-
-<!-- MODAL -->
-<div id="confirmModal" class="modal hidden">
-  <div class="card modal-box">
-    <h2 id="modalTitle">Confirm Action</h2>
-    <p id="modalMessage">Are you sure?</p>
-    <div class="modal-buttons">
-      <button class="btn btn-red" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-green" onclick="confirmAction()">Confirm</button>
-    </div>
-  </div>
+  <div id="msgBox" class="msg hidden"></div>
 </div>
 
 <script>
 const SUPABASE_URL = "https://jdetqupmtgrrwzrufhsg.supabase.co";
 const SUPABASE_KEY = "sb_publishable_QVtX3-gxQnXhsZC5tIwV8w_XXOGmmNI";
 let db = null;
-
-let currentUser = JSON.parse(localStorage.getItem("vikram_attendance_user") || "null");
-let allUsers = [];
-let currentAdminAttendance = [];
-let pendingAction = null;
+let mode = "login";
 
 window.onload = function() {
   try {
     if (typeof supabase !== 'undefined') {
       db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     } else {
-      message("⚠️ Supabase script not loaded. Refresh page!");
-      return;
+      showMsg("⚠️ Supabase SDK Library missing. Check internet connection.", true);
     }
   } catch(e) {
-    message("⚠️ DB Init Error: " + e.message);
+    showMsg("⚠️ Init Error: " + e.message, true);
+  }
+};
+
+function setMode(m) {
+  mode = m;
+  hideMsg();
+  if (m === 'signup') {
+    document.getElementById("tabSignup").classList.add("active");
+    document.getElementById("tabLogin").classList.remove("active");
+    document.getElementById("nameBox").classList.remove("hidden");
+    document.getElementById("fullName").required = true;
+    document.getElementById("btnSubmit").textContent = "Create Account";
+  } else {
+    document.getElementById("tabLogin").classList.add("active");
+    document.getElementById("tabSignup").classList.remove("active");
+    document.getElementById("nameBox").classList.add("hidden");
+    document.getElementById("fullName").required = false;
+    document.getElementById("btnSubmit").textContent = "Login";
+  }
+}
+
+function showMsg(text, isError) {
+  const b = document.getElementById("msgBox");
+  b.textContent = text;
+  b.className = "msg " + (isError ? "err" : "succ");
+  b.classList.remove("hidden");
+}
+
+function hideMsg() {
+  document.getElementById("msgBox").classList.add("hidden");
+}
+
+async function handleAuth(e) {
+  e.preventDefault();
+  if (!db) {
+    showMsg("⚠️ DB connection not active. Page refresh karein.", true);
     return;
   }
 
-  if (currentUser) { navigateUser(); } else { showLogin(); }
-};
+  const btn = document.getElementById("btnSubmit");
+  btn.disabled = true;
+  btn.textContent = "Processing...";
+  hideMsg();
 
-function loading(show) { document.getElementById("loading").classList.toggle("hidden", !show); }
-function message(text) { document.getElementById("message").textContent = text || ""; }
-
-function showLogin() {
-  document.getElementById("authPage").classList.remove("hidden");
-  document.getElementById("appPage").classList.add("hidden");
-  document.getElementById("loginForm").classList.remove("hidden");
-  document.getElementById("signupForm").classList.add("hidden");
-  document.getElementById("loginTab").classList.add("active");
-  document.getElementById("signupTab").classList.remove("active");
-  message("");
-}
-
-function showSignup() {
-  document.getElementById("loginForm").classList.add("hidden");
-  document.getElementById("signupForm").classList.remove("hidden");
-  document.getElementById("signupTab").classList.add("active");
-  document.getElementById("loginTab").classList.remove("active");
-  message("");
-}
-
-async function signup(e) {
-  e.preventDefault(); 
-  loading(true);
-  message("");
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
 
   try {
-    const fullName = document.getElementById("signupName").value.trim();
-    const email = document.getElementById("signupEmail").value.trim();
-    const phone = document.getElementById("signupPhone").value.trim();
-    const password = document.getElementById("signupPassword").value;
+    if (mode === 'signup') {
+      const fullName = document.getElementById("fullName").value.trim();
+      const phone = document.getElementById("phone").value.trim();
 
-    const { data: existing, error: checkErr } = await db.from('users').select('email').eq('email', email);
-    if (checkErr) throw checkErr;
+      // Check if email exists
+      const { data: exist, error: checkErr } = await db.from('users').select('email').eq('email', email);
+      if (checkErr) throw checkErr;
 
-    if (existing && existing.length > 0) {
-      loading(false); 
-      message("❌ Email already registered!"); 
-      return;
-    }
+      if (exist && exist.length > 0) {
+        showMsg("❌ Ye Email pehle se registered hai!", true);
+        btn.disabled = false;
+        btn.textContent = "Create Account";
+        return;
+      }
 
-    const { count, error: countErr } = await db.from('users').select('*', { count: 'exact', head: true });
-    if (countErr) throw countErr;
+      // Check user count for role
+      const { count, error: countErr } = await db.from('users').select('*', { count: 'exact', head: true });
+      if (countErr) throw countErr;
 
-    const role = (count === 0) ? 'ADMIN' : 'USER';
+      const role = (count === 0) ? 'ADMIN' : 'USER';
 
-    const { error: insErr } = await db.from('users').insert([{
-      full_name: fullName, 
-      email: email, 
-      phone: phone, 
-      password: password, 
-      role: role
-    }]);
+      // Insert User
+      const { error: insErr } = await db.from('users').insert([{
+        full_name: fullName,
+        email: email,
+        phone: phone,
+        password: password,
+        role: role
+      }]);
 
-    if (insErr) throw insErr;
+      if (insErr) throw insErr;
 
-    loading(false);
-    message("✅ Account created! Switching to Login...");
-    document.getElementById("signupForm").reset();
-    setTimeout(showLogin, 1500);
+      showMsg("✅ Account ban gaya! Login pe switch ho raha hai...", false);
+      setTimeout(() => { 
+        document.getElementById("authForm").reset();
+        setMode('login'); 
+        btn.disabled = false; 
+      }, 1500);
 
-  } catch(err) {
-    loading(false);
-    message("❌ " + (err.message || "Signup failed"));
-  }
-}
-
-async function login(e) {
-  e.preventDefault(); 
-  loading(true);
-  message("");
-
-  try {
-    const email = document.getElementById("loginEmail").value.trim();
-    const password = document.getElementById("loginPassword").value;
-
-    const { data, error } = await db.from('users')
-      .select('*')
-      .eq('email', email)
-      .eq('password', password)
-      .maybeSingle();
-
-    loading(false);
-
-    if (error) throw error;
-    if (!data) { message("❌ Invalid email or password!"); return; }
-    if (data.status !== "ACTIVE") { message("❌ Your account is blocked!"); return; }
-
-    currentUser = data;
-    localStorage.setItem("vikram_attendance_user", JSON.stringify(currentUser));
-    navigateUser();
-
-  } catch(err) {
-    loading(false);
-    message("❌ " + (err.message || "Login failed"));
-  }
-}
-
-function logout() {
-  currentUser = null;
-  localStorage.removeItem("vikram_attendance_user");
-  showLogin();
-}
-
-function navigateUser() {
-  document.getElementById("authPage").classList.add("hidden");
-  document.getElementById("appPage").classList.remove("hidden");
-  
-  document.getElementById("userName").textContent = currentUser?.full_name || "User";
-  
-  if (currentUser && currentUser.role === "ADMIN") {
-    document.getElementById("navAdmin").classList.remove("hidden");
-  } else {
-    document.getElementById("navAdmin").classList.add("hidden");
-  }
-
-  switchTab('dashboard');
-}
-
-function switchTab(tabName) {
-  document.getElementById("dashboardTab").classList.add("hidden");
-  document.getElementById("adminTab").classList.add("hidden");
-  document.getElementById("profileTab").classList.add("hidden");
-
-  document.getElementById("navDashboard").classList.remove("active");
-  document.getElementById("navAdmin").classList.remove("active");
-  document.getElementById("navProfile").classList.remove("active");
-
-  if (tabName === 'dashboard') {
-    document.getElementById("dashboardTab").classList.remove("hidden");
-    document.getElementById("navDashboard").classList.add("active");
-    loadUserDashboard();
-  } else if (tabName === 'admin') {
-    document.getElementById("adminTab").classList.remove("hidden");
-    document.getElementById("navAdmin").classList.add("active");
-    refreshAdmin();
-  } else if (tabName === 'profile') {
-    document.getElementById("profileTab").classList.remove("hidden");
-    document.getElementById("navProfile").classList.add("active");
-    loadProfileData();
-  }
-}
-
-async function loadUserDashboard() {
-  try {
-    const today = new Date().toISOString().slice(0,10);
-    
-    const { data: todayRec } = await db.from('attendance')
-      .select('*')
-      .eq('user_id', currentUser.user_id)
-      .eq('date', today)
-      .maybeSingle();
-
-    if (todayRec) {
-      document.getElementById("todayStatus").textContent = todayRec.status || "Not Marked";
-      document.getElementById("checkInTime").textContent = todayRec.check_in || "--";
-      document.getElementById("checkOutTime").textContent = todayRec.check_out || "--";
     } else {
-      document.getElementById("todayStatus").textContent = "Not Marked";
-      document.getElementById("checkInTime").textContent = "--";
-      document.getElementById("checkOutTime").textContent = "--";
+      // Login
+      const { data, error } = await db.from('users')
+        .select('*')
+        .eq('email', email)
+        .eq('password', password)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data) {
+        showMsg("❌ Galat Email ya Password!", true);
+        btn.disabled = false;
+        btn.textContent = "Login";
+        return;
+      }
+
+      if (data.status && data.status !== 'ACTIVE') {
+        showMsg("❌ Aapka account blocked hai!", true);
+        btn.disabled = false;
+        btn.textContent = "Login";
+        return;
+      }
+
+      showMsg("✅ Login Success! Welcome " + data.full_name, false);
+      localStorage.setItem("attendance_user", JSON.stringify(data));
+      btn.disabled = false;
+      btn.textContent = "Login";
     }
-
-    const { data: rows } = await db.from('attendance')
-      .select('*')
-      .eq('user_id', currentUser.user_id)
-      .order('created_at', { ascending: false });
-
-    const tbody = document.getElementById("attendanceTable");
-    if (!rows || rows.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No records</td></tr>';
-      return;
-    }
-
-    let html = "";
-    rows.forEach(r => {
-      html += `<tr><td>${r.date}</td><td>${r.check_in||'--'}</td><td>${r.check_out||'--'}</td><td><span class="badge ${r.status==='COMPLETED'?'badge-green':'badge-orange'}">${r.status}</span></td><td>${r.working_hours||'--'}</td></tr>`;
-    });
-    tbody.innerHTML = html;
-  } catch(err) 
+  } catch(err) {
+    showMsg("❌ DB Error: " + (err.message || JSON.stringify(err)), true);
+    btn.disabled = false;
+    btn.textContent = (mode === 'signup') ? "Create Account" : "Login";
+  }
+}
+</script>
+</body>
+</html>
