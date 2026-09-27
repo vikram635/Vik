@@ -4,20 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VIK4NT.INC Attendance System</title>
-<!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{ box-sizing:border-box; margin:0; padding:0; }
 body{ font-family:Arial, sans-serif; background:#0f172a; color:#fff; min-height:100vh; padding:15px; }
-.card{ background:#1e293b; border-radius:16px; padding:25px; width:100%; max-width:450px; margin:30px auto; border:1px solid #334155; box-shadow:0 10px 25px rgba(0,0,0,0.5); }
-.app-card{ max-width:900px; margin:20px auto; }
+.card{ background:#1e293b; border-radius:16px; padding:25px; width:100%; max-width:420px; margin:20px auto; border:1px solid #334155; box-shadow:0 10px 25px rgba(0,0,0,0.5); }
+.app-card{ max-width:800px; }
 h2{ text-align:center; color:#38bdf8; margin-bottom:15px; }
 .tabs{ display:flex; gap:10px; margin-bottom:15px; }
 .tabs button{ flex:1; padding:10px; border:none; border-radius:8px; background:#334155; color:#fff; font-weight:bold; cursor:pointer; }
 .tabs button.active{ background:#0284c7; }
 input{ width:100%; padding:12px; margin:6px 0; border-radius:8px; border:1px solid #475569; background:#0f172a; color:#fff; font-size:15px; }
 button.btn-main{ width:100%; padding:12px; margin-top:10px; border:none; border-radius:8px; background:#0284c7; color:#fff; font-weight:bold; font-size:16px; cursor:pointer; }
-.msg{ margin-top:12px; padding:10px; border-radius:8px; font-size:14px; text-align:center; font-weight:bold; }
+.msg{ margin-top:12px; padding:10px; border-radius:8px; font-size:14px; text-align:center; font-weight:bold; word-break:break-all; }
 .err{ background:#7f1d1d; color:#fca5a5; }
 .succ{ background:#14532d; color:#86efac; }
 .hidden{ display:none !important; }
@@ -35,7 +34,7 @@ th{ color:#94a3b8; }
 </head>
 <body>
 
-<!-- 1. LOGIN / SIGNUP PAGE -->
+<!-- LOGIN / SIGNUP PAGE -->
 <div id="authPage" class="card">
   <h2>VIK4NT.INC</h2>
   <div class="tabs">
@@ -48,16 +47,16 @@ th{ color:#94a3b8; }
     <input id="phone" type="tel" placeholder="Phone Number">
   </div>
   <input id="email" type="email" placeholder="Email Address">
-  <input id="password" type="password" placeholder="Password (min 6 characters)">
+  <input id="password" type="password" placeholder="Password (min 6 chars)">
 
   <button id="btnAuth" class="btn-main" onclick="handleAuth()">Login</button>
   <div id="authMsg" class="msg hidden"></div>
 </div>
 
-<!-- 2. MAIN DASHBOARD PAGE -->
+<!-- MAIN DASHBOARD PAGE -->
 <div id="dashPage" class="card app-card hidden">
   <div class="header">
-    <h3 id="welcomeText">👋 Welcome, User</h3>
+    <h3 id="welcomeText">👋 Welcome</h3>
     <button class="btn-logout" onclick="logout()">Logout</button>
   </div>
 
@@ -68,7 +67,7 @@ th{ color:#94a3b8; }
     </div>
   </div>
 
-  <h4 style="margin-top:20px; color:#38bdf8;">📋 Your Attendance History</h4>
+  <h4 style="margin-top:20px; color:#38bdf8;">📋 Attendance History</h4>
   <table>
     <thead><tr><th>Date</th><th>Check In</th><th>Check Out</th><th>Status</th></tr></thead>
     <tbody id="attTable"><tr><td colspan="4" style="text-align:center;">No records found</td></tr></tbody>
@@ -85,14 +84,18 @@ let currentUser = null;
 
 window.onload = function() {
   try {
-    db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    const saved = localStorage.getItem("app_current_user");
-    if (saved) {
-      currentUser = JSON.parse(saved);
-      openDashboard();
+    if(typeof supabase !== 'undefined'){
+      db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      const saved = localStorage.getItem("app_current_user");
+      if (saved) {
+        currentUser = JSON.parse(saved);
+        openDashboard();
+      }
+    } else {
+      showMsg("authMsg", "Supabase SDK load nahi hua! Internet check karein.", true);
     }
   } catch(e) {
-    showMsg("authMsg", "Error initializing database: " + e.message, true);
+    showMsg("authMsg", "Error: " + e.message, true);
   }
 };
 
@@ -116,6 +119,7 @@ function showMsg(id, txt, isErr) {
   const el = document.getElementById(id);
   el.textContent = txt;
   el.className = "msg " + (isErr ? "err" : "succ");
+  el.classList.remove("hidden");
 }
 function hideMsg(id) { document.getElementById(id).className = "msg hidden"; }
 
@@ -130,62 +134,73 @@ async function handleAuth() {
 
   const btn = document.getElementById("btnAuth");
   btn.disabled = true;
+  btn.textContent = "Processing...";
 
-  if (mode === 'signup') {
-    const fullName = document.getElementById("fullName").value.trim();
-    const phone = document.getElementById("phone").value.trim();
+  try {
+    if (mode === 'signup') {
+      const fullName = document.getElementById("fullName").value.trim();
+      const phone = document.getElementById("phone").value.trim();
 
-    if (!fullName) {
-      showMsg("authMsg", "Apna naam darj karein!", true);
+      if (!fullName) {
+        showMsg("authMsg", "Apna naam darj karein!", true);
+        btn.disabled = false;
+        btn.textContent = "Create Account";
+        return;
+      }
+
+      showMsg("authMsg", "Account ban raha hai...", false);
+
+      const { data, error } = await db.from('users').insert([{
+        full_name: fullName,
+        email: email,
+        phone: phone,
+        password: password,
+        role: 'USER'
+      }]).select();
+
       btn.disabled = false;
-      return;
-    }
+      btn.textContent = "Create Account";
 
-    showMsg("authMsg", "Account ban raha hai...", false);
-
-    const { data, error } = await db.from('users').insert([{
-      full_name: fullName,
-      email: email,
-      phone: phone,
-      password: password,
-      role: 'USER'
-    }]).select().single();
-
-    btn.disabled = false;
-
-    if (error) {
-      showMsg("authMsg", "Signup Fail: " + error.message, true);
+      if (error) {
+        showMsg("authMsg", "Signup Fail: " + error.message, true);
+      } else {
+        showMsg("authMsg", "✅ Account Ban Gaya! Logging in...", false);
+        currentUser = (data && data.length > 0) ? data[0] : { full_name: fullName, email: email };
+        localStorage.setItem("app_current_user", JSON.stringify(currentUser));
+        setTimeout(openDashboard, 800);
+      }
     } else {
-      showMsg("authMsg", "✅ Account Ban Gaya! Automatic Logging in...", false);
-      currentUser = data;
-      localStorage.setItem("app_current_user", JSON.stringify(data));
-      setTimeout(openDashboard, 1000);
+      showMsg("authMsg", "Logging in...", false);
+
+      const { data, error } = await db.from('users')
+        .select('*')
+        .eq('email', email)
+        .eq('password', password);
+
+      btn.disabled = false;
+      btn.textContent = "Login";
+
+      if (error) {
+        showMsg("authMsg", "Login Error: " + error.message, true);
+      } else if (!data || data.length === 0) {
+        showMsg("authMsg", "❌ Galat Email ya Password!", true);
+      } else {
+        currentUser = data[0];
+        localStorage.setItem("app_current_user", JSON.stringify(currentUser));
+        openDashboard();
+      }
     }
-  } else {
-    showMsg("authMsg", "Logging in...", false);
-
-    const { data, error } = await db.from('users')
-      .select('*')
-      .eq('email', email)
-      .eq('password', password)
-      .maybeSingle();
-
+  } catch(err) {
     btn.disabled = false;
-
-    if (error || !data) {
-      showMsg("authMsg", "❌ Galat Email ya Password!", true);
-    } else {
-      currentUser = data;
-      localStorage.setItem("app_current_user", JSON.stringify(data));
-      openDashboard();
-    }
+    btn.textContent = (mode === 'signup') ? "Create Account" : "Login";
+    showMsg("authMsg", "Unexpected Error: " + err.message, true);
   }
 }
 
 function openDashboard() {
-  document.getElementById("authPage").className = "card hidden";
-  document.getElementById("dashPage").className = "card app-card";
-  document.getElementById("welcomeText").textContent = "👋 Welcome, " + currentUser.full_name;
+  document.getElementById("authPage").classList.add("hidden");
+  document.getElementById("dashPage").classList.remove("hidden");
+  document.getElementById("welcomeText").textContent = "👋 Welcome, " + (currentUser.full_name || "User");
   loadAttendanceRecords();
 }
 
@@ -194,24 +209,29 @@ async function markAttendance(st) {
   const today = new Date().toISOString().slice(0,10);
   const time = new Date().toLocaleTimeString();
 
-  const { error } = await db.from('attendance').insert([{
-    user_id: currentUser.user_id,
-    user_name: currentUser.full_name,
-    date: today,
-    check_in: st === 'CHECKED_IN' ? time : null,
-    check_out: st === 'COMPLETED' ? time : null,
-    status: st
-  }]);
+  try {
+    const { error } = await db.from('attendance').insert([{
+      user_id: currentUser.user_id || null,
+      user_name: currentUser.full_name || "User",
+      date: today,
+      check_in: st === 'CHECKED_IN' ? time : null,
+      check_out: st === 'COMPLETED' ? time : null,
+      status: st
+    }]);
 
-  if (error) {
-    showMsg("dashMsg", "Error: " + error.message, true);
-  } else {
-    showMsg("dashMsg", "✅ Attendance Marked (" + st + ")", false);
-    loadAttendanceRecords();
+    if (error) {
+      showMsg("dashMsg", "Error: " + error.message, true);
+    } else {
+      showMsg("dashMsg", "✅ Attendance Marked (" + st + ")", false);
+      loadAttendanceRecords();
+    }
+  } catch(e) {
+    showMsg("dashMsg", "Error: " + e.message, true);
   }
 }
 
 async function loadAttendanceRecords() {
+  if (!currentUser.user_id) return;
   const { data } = await db.from('attendance')
     .select('*')
     .eq('user_id', currentUser.user_id)
