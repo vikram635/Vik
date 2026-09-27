@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VIK4NT.INC Portal</title>
+<!-- Supabase & PDF Libraries -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -19,46 +20,35 @@ body{ font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg-gradient)
 .container{ width: 100%; max-width: 1000px; margin: auto; }
 .card{ background: var(--card-bg); backdrop-filter: blur(16px); border-radius: 20px; padding: 25px; border: 1px solid var(--border); box-shadow: 0 15px 35px rgba(0,0,0,0.5); margin-bottom: 20px; }
 .auth-card{ max-width: 420px; margin: 40px auto; }
-
 .brand-title{ text-align: center; color: #a78bfa; font-size: 28px; font-weight: 800; }
 .brand-subtitle{ text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 20px; }
-
 .tabs{ display: flex; gap: 10px; margin-bottom: 20px; }
 .tabs button{ flex: 1; padding: 12px; border: none; border-radius: 12px; background: rgba(255,255,255,0.08); color: #fff; font-weight: bold; cursor: pointer; }
 .tabs button.active{ background: linear-gradient(135deg, #7c3aed, #2563eb); }
-
 input, textarea, select{ width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid var(--border); background: rgba(15, 23, 42, 0.9); color: #fff; font-size: 14px; outline: none; }
-
 button.btn-main{ width: 100%; padding: 14px; margin-top: 10px; border: none; border-radius: 10px; background: linear-gradient(135deg, #7c3aed, #2563eb); color: #fff; font-weight: bold; font-size: 16px; cursor: pointer; }
 button.btn-pdf{ background: linear-gradient(135deg, #059669, #10b981); width: auto; padding: 10px 18px; margin-bottom: 15px; border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer; }
-
 .header{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px; flex-wrap: wrap; gap: 10px; }
 .nav-btns{ display: flex; gap: 8px; flex-wrap: wrap; }
 .nav-btn{ background: rgba(255,255,255,0.08); color: #fff; border: 1px solid var(--border); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; }
 .nav-btn.active{ background: var(--purple-glow); border-color: var(--purple-glow); }
-
 .stats-grid{ display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
 .stat-box{ background: rgba(15, 23, 42, 0.7); padding: 18px; border-radius: 14px; border: 1px solid var(--border); }
 .stat-box small{ color: #94a3b8; font-size: 11px; text-transform: uppercase; font-weight: 600; }
 .stat-box strong{ display: block; font-size: 22px; margin-top: 6px; color: #fff; }
-
 .btn-att{ padding: 16px; width: 100%; margin: 8px 0; font-size: 17px; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; color: #fff; }
 .checkin{ background: linear-gradient(135deg, #059669, #10b981); }
 .checkout{ background: linear-gradient(135deg, #ea580c, #f97316); }
-
 table{ width: 100%; border-collapse: collapse; margin-top: 15px; text-align: left; }
 th, td{ padding: 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
 th{ color: #a78bfa; }
-
 .badge{ display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; }
 .badge-green{ background: rgba(16,185,129,0.2); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
 .badge-blue{ background: rgba(37,99,235,0.2); color: #93c5fd; border: 1px solid rgba(37,99,235,0.3); }
 .badge-orange{ background: rgba(249,115,22,0.2); color: #fdba74; border: 1px solid rgba(249,115,22,0.3); }
 .badge-red{ background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
-
 .video-card{ background: rgba(15, 23, 42, 0.9); border-radius: 14px; border: 1px solid var(--border); padding: 15px; margin-bottom: 15px; }
 .video-card iframe{ width: 100%; height: 220px; border-radius: 10px; border: none; }
-
 .msg{ margin-top: 15px; padding: 12px; border-radius: 10px; font-size: 14px; text-align: center; font-weight: bold; word-break: break-all; }
 .err{ background: rgba(239,68,68,0.3); color: #fca5a5; border: 1px solid #ef4444; }
 .succ{ background: rgba(16,185,129,0.3); color: #86efac; border: 1px solid #10b981; }
@@ -66,30 +56,24 @@ th{ color: #a78bfa; }
 </style>
 </head>
 <body>
-
 <div class="container">
-
   <!-- AUTH PAGE -->
   <div id="authPage" class="card auth-card">
     <div class="brand-title">👑 VIK4NT.INC</div>
     <div class="brand-subtitle">Attendance & Learning Portal</div>
-
     <div class="tabs">
       <button id="tLogin" class="active" onclick="setAuth('login')">Login</button>
       <button id="tSignup" onclick="setAuth('signup')">Sign Up</button>
     </div>
-
     <div id="sFields" class="hidden">
       <input id="fName" type="text" placeholder="Full Name">
       <input id="fPhone" type="tel" placeholder="Phone Number">
     </div>
     <input id="fEmail" type="email" placeholder="Email Address">
     <input id="fPass" type="password" placeholder="Password">
-
     <button id="fBtn" class="btn-main" onclick="submitAuth()">Login</button>
     <div id="fMsg" class="msg hidden"></div>
   </div>
-
   <!-- DASHBOARD PAGE -->
   <div id="dashPage" class="card hidden">
     <div class="header">
@@ -99,7 +83,6 @@ th{ color: #a78bfa; }
       </div>
       <button onclick="logout()" style="background:#dc2626; color:#fff; border:none; padding:8px 14px; border-radius:8px; cursor:pointer; font-weight:bold;">Logout</button>
     </div>
-
     <div class="nav-btns">
       <button id="nbDash" class="nav-btn active" onclick="showTab('dash')">🏠 Attendance</button>
       <button id="nbLeave" class="nav-btn" onclick="showTab('leave')">📅 Leave Request</button>
@@ -107,7 +90,6 @@ th{ color: #a78bfa; }
       <button id="nbAdmin" class="nav-btn hidden" onclick="showTab('admin')">👑 Admin Panel</button>
       <button id="nbProf" class="nav-btn" onclick="showTab('prof')">👤 Profile</button>
     </div>
-
     <!-- TAB 1: ATTENDANCE -->
     <div id="tabDash">
       <div class="stats-grid">
@@ -116,12 +98,10 @@ th{ color: #a78bfa; }
         <div class="stat-box"><small>Check Out</small><strong id="uCheckOut">--</strong></div>
         <div class="stat-box"><small>Hours Worked</small><strong id="uHours">--</strong></div>
       </div>
-
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
         <button class="btn-att checkin" onclick="doAtt('CHECKED_IN')">🟢 Check In</button>
         <button class="btn-att checkout" onclick="doAtt('COMPLETED')">🔴 Check Out</button>
       </div>
-
       <h4 style="margin-top:20px; color:#a78bfa;">📋 Attendance History</h4>
       <div style="overflow-x:auto;">
         <table>
@@ -130,7 +110,6 @@ th{ color: #a78bfa; }
         </table>
       </div>
     </div>
-
     <!-- TAB 2: LEAVE REQUEST -->
     <div id="tabLeave" class="hidden">
       <h4 style="color:#a78bfa; margin-bottom:15px;">📅 Leave Management</h4>
@@ -141,7 +120,6 @@ th{ color: #a78bfa; }
         <textarea id="lReason" placeholder="Reason for leave" rows="2"></textarea>
         <button class="btn-main" onclick="applyLeave()">Submit Leave Request</button>
       </div>
-
       <h5 style="color:#38bdf8; margin-top:15px;">📋 My Leave Applications</h5>
       <div style="overflow-x:auto;">
         <table>
@@ -150,7 +128,6 @@ th{ color: #a78bfa; }
         </table>
       </div>
     </div>
-
     <!-- TAB 3: LEARNING -->
     <div id="tabLearn" class="hidden">
       <h4 style="color:#a78bfa; margin-bottom:15px;">📚 Training Videos</h4>
@@ -162,29 +139,24 @@ th{ color: #a78bfa; }
       </div>
       <div id="vList">Loading videos...</div>
     </div>
-
     <!-- TAB 4: ADMIN PANEL -->
     <div id="tabAdmin" class="hidden">
       <h4 style="color:#a78bfa; margin-bottom:15px;">👑 Admin Controls</h4>
-      
       <div class="stats-grid">
         <div class="stat-box"><small>Total Users</small><strong id="aTotalU">0</strong></div>
         <div class="stat-box"><small>Today Attendance</small><strong id="aTodayAtt">0</strong></div>
         <div class="stat-box"><small>Pending Leaves</small><strong id="aPendingL">0</strong></div>
       </div>
-
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
         <h5 style="color:#38bdf8; margin-top:10px;">📋 All Attendance Logs</h5>
         <button class="btn-pdf" onclick="exportAttendancePDF()">📄 Download PDF Report</button>
       </div>
-
       <div style="overflow-x:auto;">
         <table>
           <thead><tr><th>Date</th><th>Employee</th><th>In</th><th>Out</th><th>Hours</th><th>Status</th><th>Map Location</th></tr></thead>
           <tbody id="aAttTable"><tr><td colspan="7" style="text-align:center;">Loading...</td></tr></tbody>
         </table>
       </div>
-
       <h5 style="color:#38bdf8; margin-top:25px;">📅 Leave Applications Management</h5>
       <div style="overflow-x:auto;">
         <table>
@@ -192,7 +164,6 @@ th{ color: #a78bfa; }
           <tbody id="aLeaveTable"><tr><td colspan="5" style="text-align:center;">Loading...</td></tr></tbody>
         </table>
       </div>
-
       <h5 style="color:#38bdf8; margin-top:25px;">👥 User Management</h5>
       <div style="overflow-x:auto;">
         <table>
@@ -217,9 +188,7 @@ th{ color: #a78bfa; }
 
     <div id="dMsg" class="msg hidden"></div>
   </div>
-
 </div>
-
 <script>
 const S_URL = "https://jdetqupmtgrrwzrufhsg.supabase.co";
 const S_KEY = "sb_publishable_QVtX3-gxQnXhsZC5tIwV8w_XXOGmmNI";
@@ -239,7 +208,6 @@ window.onload = function() {
     }
   } catch(e) { console.error(e); }
 };
-
 function setAuth(m) {
   mode = m;
   hideBox("fMsg");
@@ -255,7 +223,6 @@ function setAuth(m) {
     document.getElementById("fBtn").textContent = "Login";
   }
 }
-
 function showBox(id, txt, err) {
   const el = document.getElementById(id);
   if(!el) return;
@@ -263,12 +230,10 @@ function showBox(id, txt, err) {
   el.className = "msg " + (err ? "err" : "succ");
   el.classList.remove("hidden");
 }
-
 function hideBox(id) { 
   const el = document.getElementById(id);
   if(el) el.classList.add("hidden"); 
 }
-
 async function submitAuth() {
   const email = document.getElementById("fEmail").value.trim();
   const pass = document.getElementById("fPass").value;
@@ -277,25 +242,20 @@ async function submitAuth() {
     showBox("fMsg", "⚠️ Email aur Password bharein!", true);
     return;
   }
-
   const btn = document.getElementById("fBtn");
   btn.disabled = true;
   btn.textContent = "Connecting...";
   showBox("fMsg", "Connecting to database...", false);
-
   try {
     if(mode === 'signup') {
       const name = document.getElementById("fName").value.trim();
       const phone = document.getElementById("fPhone").value.trim();
       if(!name) { showBox("fMsg", "⚠️ Naam bharein!", true); btn.disabled = false; btn.textContent = "Create Account"; return; }
-
       const { data, error } = await db.from('users').insert([{
         full_name: name, email: email, phone: phone, password: pass, role: 'USER'
       }]).select();
-
       btn.disabled = false;
       btn.textContent = "Create Account";
-
       if(error) {
         showBox("fMsg", "❌ Signup Error: " + error.message, true);
       } else {
@@ -306,10 +266,8 @@ async function submitAuth() {
       }
     } else {
       const { data, error } = await db.from('users').select('*').eq('email', email).eq('password', pass);
-
       btn.disabled = false;
       btn.textContent = "Login";
-
       if(error) {
         showBox("fMsg", "❌ Login Error: " + error.message, true);
       } else if(!data || data.length === 0) {
@@ -327,23 +285,19 @@ async function submitAuth() {
     showBox("fMsg", "Error: " + err.message, true);
   }
 }
-
 function openDash() {
   document.getElementById("authPage").className = "card auth-card hidden";
   document.getElementById("dashPage").className = "card";
   document.getElementById("wMsg").textContent = "👋 Welcome, " + (user.full_name || "User");
   document.getElementById("uBadge").textContent = user.role || "USER";
-
   if(user.role === 'ADMIN') {
     document.getElementById("adminVideoBox").classList.remove("hidden");
     document.getElementById("nbAdmin").classList.remove("hidden");
   } else {
     document.getElementById("nbAdmin").classList.add("hidden");
   }
-
   showTab('dash');
 }
-
 function showTab(t) {
   document.getElementById("tabDash").classList.add("hidden");
   document.getElementById("tabLeave").classList.add("hidden");
@@ -356,7 +310,6 @@ function showTab(t) {
   document.getElementById("nbLearn").className = "nav-btn";
   document.getElementById("nbAdmin").className = "nav-btn";
   document.getElementById("nbProf").className = "nav-btn";
-
   if(t === 'dash') {
     document.getElementById("tabDash").classList.remove("hidden");
     document.getElementById("nbDash").className = "nav-btn active";
@@ -379,8 +332,7 @@ function showTab(t) {
     loadProfile();
   }
 }
-
-// ATTENDANCE & SAFE GPS LOGIC
+// SAFE ATTENDANCE LOGIC
 async function doAtt(st) {
   showBox("dMsg", "Saving Attendance...", false);
 
@@ -391,14 +343,12 @@ async function doAtt(st) {
       const mapUrl = `https://www.google.com/maps?q=${lat},${lon}`;
       saveAttendanceWithLocation(st, lat, lon, mapUrl);
     }, (error) => {
-      // Fallback if location permission is denied
       saveAttendanceWithLocation(st, null, null, null);
-    }, { timeout: 3000 });
+    }, { timeout: 2500 });
   } else {
     saveAttendanceWithLocation(st, null, null, null);
   }
 }
-
 async function saveAttendanceWithLocation(st, lat, lon, mapUrl) {
   const today = new Date().toISOString().slice(0,10);
   const time = new Date().toLocaleTimeString();
@@ -411,13 +361,11 @@ async function saveAttendanceWithLocation(st, lat, lon, mapUrl) {
     check_out: st === 'COMPLETED' ? time : null,
     status: st
   };
-
   if(lat && lon) {
     insertObj.latitude = String(lat);
     insertObj.longitude = String(lon);
     insertObj.location_url = mapUrl;
   }
-
   const { error } = await db.from('attendance').insert([insertObj]);
 
   if(error) {
@@ -427,7 +375,6 @@ async function saveAttendanceWithLocation(st, lat, lon, mapUrl) {
     loadAtt();
   }
 }
-
 async function loadAtt() {
   try {
     const today = new Date().toISOString().slice(0,10);
@@ -437,7 +384,6 @@ async function loadAtt() {
       tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No records</td></tr>';
       return;
     }
-
     let todayRec = data.find(r => r.date === today);
     if (todayRec) {
       document.getElementById("uStatus").textContent = todayRec.status;
@@ -445,8 +391,7 @@ async function loadAtt() {
       document.getElementById("uCheckOut").textContent = todayRec.check_out || "--";
       document.getElementById("uHours").textContent = todayRec.total_hours || "--";
     }
-
     let html = "";
     data.forEach(r => {
       let locBtn = r.location_url ? `<a href="${r.location_url}" target="_blank" style="color:#38bdf8; text-decoration:none;">📍 Map</a>` : '--';
-      html += `<tr><t
+      html += `<tr><td>${r.date}</td><td>${
