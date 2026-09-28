@@ -33,6 +33,7 @@ input, textarea, select{ width: 100%; padding: 12px; margin: 8px 0; border-radiu
 
 button.btn-main{ width: 100%; padding: 14px; margin-top: 10px; border: none; border-radius: 10px; background: linear-gradient(135deg, #7c3aed, #2563eb); color: #fff; font-weight: bold; font-size: 16px; cursor: pointer; }
 button.btn-pdf{ background: linear-gradient(135deg, #059669, #10b981); width: auto; padding: 10px 18px; margin-bottom: 15px; border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer; }
+button.btn-csv{ background: linear-gradient(135deg, #2563eb, #1d4ed8); width: auto; padding: 10px 18px; margin-bottom: 15px; border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer; }
 
 .header{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px; flex-wrap: wrap; gap: 10px; }
 .nav-btns{ display: flex; gap: 8px; flex-wrap: wrap; }
@@ -61,6 +62,8 @@ th{ color: #a78bfa; }
 
 .video-card{ background: rgba(15, 23, 42, 0.9); border-radius: 14px; border: 1px solid var(--border); padding: 15px; margin-bottom: 15px; }
 .video-card iframe{ width: 100%; height: 220px; border-radius: 10px; border: none; }
+
+.profile-avatar{ width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 2px solid var(--purple-glow); margin-bottom: 10px; }
 
 .msg{ margin-top: 15px; padding: 12px; border-radius: 10px; font-size: 14px; text-align: center; font-weight: bold; word-break: break-all; }
 .err{ background: rgba(239,68,68,0.3); color: #fca5a5; border: 1px solid #ef4444; }
@@ -96,9 +99,12 @@ th{ color: #a78bfa; }
   <!-- DASHBOARD PAGE -->
   <div id="dashPage" class="card hidden">
     <div class="header">
-      <div>
-        <h3 id="wMsg" style="font-size:20px;">👋 Welcome</h3>
-        <small id="uBadge" class="badge badge-blue">USER</small>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <img id="headerAvatar" src="https://via.placeholder.com/90" class="profile-avatar" style="width:45px; height:45px; margin-bottom:0;" alt="Avatar">
+        <div>
+          <h3 id="wMsg" style="font-size:20px;">👋 Welcome</h3>
+          <small id="uBadge" class="badge badge-blue">USER</small>
+        </div>
       </div>
       <button onclick="logout()" style="background:#dc2626; color:#fff; border:none; padding:8px 14px; border-radius:8px; cursor:pointer; font-weight:bold;">Logout</button>
     </div>
@@ -181,7 +187,10 @@ th{ color: #a78bfa; }
 
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
         <h5 style="color:#38bdf8; margin-top:10px;">📋 All Attendance Logs</h5>
-        <button class="btn-pdf" onclick="exportAttendancePDF()">📄 Download PDF Report</button>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button class="btn-pdf" onclick="exportAttendancePDF()">📄 Download PDF</button>
+          <button class="btn-csv" onclick="exportAttendanceCSV()">📥 Download CSV</button>
+        </div>
       </div>
 
       <div style="overflow-x:auto;">
@@ -211,10 +220,26 @@ th{ color: #a78bfa; }
     <!-- TAB 5: PROFILE -->
     <div id="tabProf" class="hidden">
       <h4 style="color:#a78bfa; margin-bottom:15px;">👤 My Profile</h4>
-      <div style="max-width:400px;">
+      <div style="max-width:450px;">
+        <div style="text-align:center; margin-bottom:15px;">
+          <img id="pAvatarImg" src="https://via.placeholder.com/90" class="profile-avatar" alt="Profile Photo">
+          <div>
+            <label style="font-size:12px; color:#38bdf8; cursor:pointer;">
+              📷 Upload Photo <input type="file" id="pAvatarFile" accept="image/*" style="display:none;" onchange="uploadAvatar(this)">
+            </label>
+          </div>
+        </div>
+
         <input id="pName" type="text" placeholder="Full Name">
-        <input id="pEmail" type="email" readonly style="opacity:0.6;">
+        <input id="pEmail" type="email" readonly style="opacity:0.6;" title="Email cannot be changed">
         <input id="pPhone" type="tel" placeholder="Phone Number">
+        
+        <h5 style="color:#38bdf8; margin:15px 0 5px 0; font-size:14px;">🔗 Social Media Profiles</h5>
+        <input id="pInstagram" type="text" placeholder="Instagram Profile URL">
+        <input id="pTwitter" type="text" placeholder="Twitter / X Profile URL">
+        <input id="pLinkedIn" type="text" placeholder="LinkedIn Profile URL">
+        <input id="pGithub" type="text" placeholder="GitHub Profile URL">
+
         <input id="pPass" type="password" placeholder="New Password (optional)">
         <button class="btn-main" onclick="updateProfile()">Save Changes</button>
       </div>
@@ -234,9 +259,9 @@ let db = null, mode = "login", user = null;
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const todayStr = () => new Date().toLocaleDateString('en-CA'); // local date YYYY-MM-DD
-const nowTime = () => new Date().toLocaleTimeString('en-GB'); // HH:MM:SS
-function toSecs(t) { // handles "14:05:09" and "2:05:09 pm"
+const todayStr = () => new Date().toLocaleDateString('en-CA');
+const nowTime = () => new Date().toLocaleTimeString('en-GB');
+function toSecs(t) {
   const m = String(t || '').trim().match(/^(\d{1,2}):(\d{2}):?(\d{2})?\s*([ap]m)?$/i);
   if (!m) return NaN;
   let h = +m[1]; const mi = +m[2], s = +(m[3] || 0), ap = (m[4] || '').toLowerCase();
@@ -247,6 +272,12 @@ function toSecs(t) { // handles "14:05:09" and "2:05:09 pm"
 
 window.onload = async function () {
   try {
+    if (typeof supabase === 'undefined' || !supabase.createClient) {
+      console.error("Supabase library failed to load from CDN.");
+      showBox("fMsg", "❌ Supabase library load nahi ho payi. Internet connection ya ad-blocker check karein.", true);
+      return;
+    }
+
     db = supabase.createClient(S_URL, S_KEY, {
       auth: {
         persistSession: true, autoRefreshToken: true, detectSessionInUrl: false,
@@ -255,7 +286,10 @@ window.onload = async function () {
     });
     const { data } = await db.auth.getSession();
     if (data && data.session) await loadUser(data.session.user);
-  } catch (e) { console.error(e); }
+  } catch (e) { 
+    console.error(e); 
+    showBox("fMsg", "❌ Connection Error: " + e.message, true);
+  }
 };
 
 function setAuth(m) {
@@ -273,7 +307,7 @@ function hideBox(id) { const el = $(id); if (el) el.classList.add("hidden"); }
 
 async function loadUser(authUser) {
   const { data, error } = await db.from('users')
-    .select('user_id, full_name, email, phone, role, status')
+    .select('user_id, full_name, email, phone, role, status, avatar_url, instagram, twitter, linkedin, github')
     .eq('user_id', authUser.id).maybeSingle();
   if (error || !data) {
     showBox("fMsg", "❌ Profile nahi mili" + (error ? ": " + error.message : ". Dobara Sign Up karein."), true);
@@ -313,6 +347,9 @@ function openDash() {
   $("dashPage").className = "card";
   $("wMsg").textContent = "👋 Welcome, " + (user.full_name || "User");
   $("uBadge").textContent = user.role || "USER";
+  if(user.avatar_url) {
+    $("headerAvatar").src = user.avatar_url;
+  }
   const admin = user.role === 'ADMIN';
   $("nbAdmin").classList.toggle("hidden", !admin);
   $("adminVideoBox").classList.toggle("hidden", !admin);
@@ -525,20 +562,102 @@ function exportAttendancePDF() {
   doc.save("Attendance_Report.pdf");
 }
 
+function exportAttendanceCSV() {
+  if (!adminAtt || !adminAtt.length) {
+    alert("No attendance data available to export!");
+    return;
+  }
+  const headers = ["Date", "Employee", "In", "Out", "Hours", "Status"];
+  const rows = adminAtt.map(a => [
+    `"${a.date || ''}"`,
+    `"${(a.user_name || '').replace(/"/g, '""')}"`,
+    `"${a.check_in || '--'}"`,
+    `"${a.check_out || '--'}"`,
+    `"${a.total_hours || '--'}"`,
+    `"${a.status || ''}"`
+  ]);
+
+  let csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+  let encodedUri = encodeURI(csvContent);
+  let link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", "Attendance_Report.csv");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
 // ===== PROFILE =====
 function loadProfile() {
-  $("pName").value = user.full_name || ""; $("pEmail").value = user.email || "";
-  $("pPhone").value = user.phone || ""; $("pPass").value = "";
+  $("pName").value = user.full_name || ""; 
+  $("pEmail").value = user.email || "";
+  $("pPhone").value = user.phone || ""; 
+  $("pInstagram").value = user.instagram || "";
+  $("pTwitter").value = user.twitter || "";
+  $("pLinkedIn").value = user.linkedin || "";
+  $("pGithub").value = user.github || "";
+  $("pPass").value = "";
+  const avatar = user.avatar_url || "https://via.placeholder.com/90";
+  $("pAvatarImg").src = avatar;
 }
+
+async function uploadAvatar(input) {
+  const file = input.files[0];
+  if(!file) return;
+  try {
+    showBox("pMsg", "Uploading photo...", false);
+    const ext = file.name.split('.').pop();
+    const fileName = `avatar_${user.user_id}_${Date.now()}.${ext}`;
+    const { error: uploadErr } = await db.storage.from(BUCKET).upload(fileName, file, { upsert: true });
+    if(uploadErr) throw uploadErr;
+
+    const { data } = db.storage.from(BUCKET).getPublicUrl(fileName);
+    const publicUrl = data.publicUrl;
+
+    const { error: updateErr } = await db.from('users').update({ avatar_url: publicUrl }).eq('user_id', user.user_id);
+    if(updateErr) throw updateErr;
+
+    user.avatar_url = publicUrl;
+    $("pAvatarImg").src = publicUrl;
+    $("headerAvatar").src = publicUrl;
+    showBox("pMsg", "✅ Profile photo updated successfully!", false);
+  } catch(e) {
+    showBox("pMsg", "❌ Error uploading photo: " + e.message, true);
+  }
+}
+
 async function updateProfile() {
-  const name = $("pName").value.trim(), phone = $("pPhone").value.trim(), pass = $("pPass").value;
-  const { error } = await db.from('users').update({ full_name: name, phone }).eq('user_id', user.user_id);
+  const name = $("pName").value.trim();
+  const phone = $("pPhone").value.trim();
+  const instagram = $("pInstagram").value.trim();
+  const twitter = $("pTwitter").value.trim();
+  const linkedin = $("pLinkedIn").value.trim();
+  const github = $("pGithub").value.trim();
+  const pass = $("pPass").value;
+
+  const { error } = await db.from('users').update({ 
+    full_name: name, 
+    phone, 
+    instagram, 
+    twitter, 
+    linkedin, 
+    github 
+  }).eq('user_id', user.user_id);
+
   if (error) { showBox("pMsg", "Error: " + error.message, true); return; }
+  
   if (pass) {
     const { error: e2 } = await db.auth.updateUser({ password: pass });
     if (e2) { showBox("pMsg", "Error: " + e2.message, true); return; }
   }
-  user.full_name = name; user.phone = phone;
+
+  user.full_name = name; 
+  user.phone = phone;
+  user.instagram = instagram;
+  user.twitter = twitter;
+  user.linkedin = linkedin;
+  user.github = github;
+
   $("wMsg").textContent = "👋 Welcome, " + name;
   showBox("pMsg", "✅ Profile updated!", false);
 }
