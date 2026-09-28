@@ -93,7 +93,20 @@ th{ color: #a78bfa; }
     <input id="fPass" type="password" placeholder="Password">
 
     <button id="fBtn" class="btn-main" onclick="submitAuth()">Login</button>
+    <div id="forgotLink" style="text-align:center; margin-top:12px;">
+      <a href="#" onclick="forgotPassword(); return false;" style="color:#38bdf8; font-size:13px;">Forgot Password?</a>
+    </div>
     <div id="fMsg" class="msg hidden"></div>
+  </div>
+
+  <!-- RESET PASSWORD PAGE -->
+  <div id="resetPage" class="card auth-card hidden">
+    <div class="brand-title">🔑 Naya Password</div>
+    <div class="brand-subtitle">Apna naya password set karein</div>
+    <input id="rPass" type="password" placeholder="Naya Password (min 6)">
+    <input id="rPass2" type="password" placeholder="Password dobara likhein">
+    <button id="rBtn" class="btn-main" onclick="saveNewPassword()">Password Save Karein</button>
+    <div id="rMsg" class="msg hidden"></div>
   </div>
 
   <!-- DASHBOARD PAGE -->
@@ -255,7 +268,7 @@ th{ color: #a78bfa; }
 const S_URL = "https://jdetqupmtgrrwzrufhsg.supabase.co";
 const S_KEY = "sb_publishable_QVtX3-gxQnXhsZC5tIwV8w_XXOGmmNI";
 const BUCKET = "Vikram";
-let db = null, mode = "login", user = null;
+let db = null, mode = "login", user = null, recovering = false;
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -295,9 +308,12 @@ async function ensureDb() {
   }
   db = supabase.createClient(S_URL, S_KEY, {
     auth: {
-      persistSession: true, autoRefreshToken: true, detectSessionInUrl: false,
+      persistSession: true, autoRefreshToken: true, detectSessionInUrl: true,
       lock: async (name, acquireTimeout, fn) => { return await fn(); }
     }
+  });
+  db.auth.onAuthStateChange((event) => {
+    if (event === 'PASSWORD_RECOVERY') { recovering = true; showReset(); }
   });
   return db;
 }
@@ -306,12 +322,41 @@ window.onload = async function () {
   try {
     await ensureDb();
     const { data } = await db.auth.getSession();
-    if (data && data.session) await loadUser(data.session.user);
+    if (/type=recovery/.test(location.hash)) { recovering = true; showReset(); return; }
+    if (!recovering && data && data.session) await loadUser(data.session.user);
   } catch (e) {
     console.error(e);
     showBox("fMsg", "❌ Connection Error: " + e.message, true);
   }
 };
+
+async function forgotPassword() {
+  const email = $("fEmail").value.trim();
+  if (!email) { showBox("fMsg", "⚠️ Upar Email Address bharein, phir Forgot Password dabayein.", true); return; }
+  try {
+    await ensureDb();
+    const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+    if (error) { showBox("fMsg", "❌ " + error.message, true); return; }
+    showBox("fMsg", "📧 Reset link email par bhej diya. Inbox aur Spam dono check karein.", false);
+  } catch (e) { showBox("fMsg", "❌ " + e.message, true); }
+}
+function showReset() {
+  $("authPage").className = "card auth-card hidden";
+  $("dashPage").className = "card hidden";
+  $("resetPage").className = "card auth-card";
+}
+async function saveNewPassword() {
+  const p1 = $("rPass").value, p2 = $("rPass2").value;
+  if (p1.length < 6) { showBox("rMsg", "⚠️ Password kam se kam 6 akshar ka ho.", true); return; }
+  if (p1 !== p2) { showBox("rMsg", "⚠️ Dono password same nahi hain.", true); return; }
+  try {
+    const { error } = await db.auth.updateUser({ password: p1 });
+    if (error) { showBox("rMsg", "❌ " + error.message, true); return; }
+    showBox("rMsg", "✅ Password badal gaya! Login page par ja rahe hain...", false);
+    await db.auth.signOut();
+    setTimeout(() => { location.href = location.origin + location.pathname; }, 1500);
+  } catch (e) { showBox("rMsg", "❌ " + e.message, true); }
+}
 
 function setAuth(m) {
   mode = m; hideBox("fMsg");
