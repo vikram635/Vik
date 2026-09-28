@@ -100,7 +100,7 @@ th{ color: #a78bfa; }
   <div id="dashPage" class="card hidden">
     <div class="header">
       <div style="display:flex; align-items:center; gap:12px;">
-        <img id="headerAvatar" src="https://via.placeholder.com/90" class="profile-avatar" style="width:45px; height:45px; margin-bottom:0;" alt="Avatar">
+        <img id="headerAvatar" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Crect width='90' height='90' fill='%23334155'/%3E%3Ccircle cx='45' cy='35' r='16' fill='%2394a3b8'/%3E%3Cellipse cx='45' cy='78' rx='28' ry='22' fill='%2394a3b8'/%3E%3C/svg%3E" class="profile-avatar" style="width:45px; height:45px; margin-bottom:0;" alt="Avatar">
         <div>
           <h3 id="wMsg" style="font-size:20px;">👋 Welcome</h3>
           <small id="uBadge" class="badge badge-blue">USER</small>
@@ -222,10 +222,10 @@ th{ color: #a78bfa; }
       <h4 style="color:#a78bfa; margin-bottom:15px;">👤 My Profile</h4>
       <div style="max-width:450px;">
         <div style="text-align:center; margin-bottom:15px;">
-          <img id="pAvatarImg" src="https://via.placeholder.com/90" class="profile-avatar" alt="Profile Photo">
+          <img id="pAvatarImg" style="cursor:pointer;" onclick="$('pAvatarFile').click()" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Crect width='90' height='90' fill='%23334155'/%3E%3Ccircle cx='45' cy='35' r='16' fill='%2394a3b8'/%3E%3Cellipse cx='45' cy='78' rx='28' ry='22' fill='%2394a3b8'/%3E%3C/svg%3E" class="profile-avatar" alt="Profile Photo">
           <div>
-            <label style="font-size:12px; color:#38bdf8; cursor:pointer;">
-              📷 Upload Photo <input type="file" id="pAvatarFile" accept="image/*" style="display:none;" onchange="uploadAvatar(this)">
+            <label style="display:inline-block; padding:8px 16px; background:#7c3aed; color:#fff; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">
+              📷 Change Photo <input type="file" id="pAvatarFile" accept="image/*" style="display:none;" onchange="uploadAvatar(this)">
             </label>
           </div>
         </div>
@@ -270,24 +270,45 @@ function toSecs(t) {
   return h * 3600 + mi * 60 + s;
 }
 
+// Load Supabase library (tries multiple CDNs), then create client
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    const el = document.createElement('script');
+    el.src = src; el.onload = res; el.onerror = () => rej(new Error("load failed: " + src));
+    document.head.appendChild(el);
+  });
+}
+async function ensureDb() {
+  if (db) return db;
+  if (typeof supabase === 'undefined' || !supabase.createClient) {
+    const cdns = [
+      "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+      "https://unpkg.com/@supabase/supabase-js@2",
+      "https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.39.7/supabase.min.js"
+    ];
+    for (const u of cdns) {
+      try { await loadScript(u); if (window.supabase && window.supabase.createClient) break; } catch (e) { console.warn(e.message); }
+    }
+  }
+  if (typeof supabase === 'undefined' || !supabase.createClient) {
+    throw new Error("Supabase library load nahi ho payi. Internet ya ad-blocker check karein.");
+  }
+  db = supabase.createClient(S_URL, S_KEY, {
+    auth: {
+      persistSession: true, autoRefreshToken: true, detectSessionInUrl: false,
+      lock: async (name, acquireTimeout, fn) => { return await fn(); }
+    }
+  });
+  return db;
+}
+
 window.onload = async function () {
   try {
-    if (typeof supabase === 'undefined' || !supabase.createClient) {
-      console.error("Supabase library failed to load from CDN.");
-      showBox("fMsg", "❌ Supabase library load nahi ho payi. Internet connection ya ad-blocker check karein.", true);
-      return;
-    }
-
-    db = supabase.createClient(S_URL, S_KEY, {
-      auth: {
-        persistSession: true, autoRefreshToken: true, detectSessionInUrl: false,
-        lock: async (name, acquireTimeout, fn) => { return await fn(); }
-      }
-    });
+    await ensureDb();
     const { data } = await db.auth.getSession();
     if (data && data.session) await loadUser(data.session.user);
-  } catch (e) { 
-    console.error(e); 
+  } catch (e) {
+    console.error(e);
     showBox("fMsg", "❌ Connection Error: " + e.message, true);
   }
 };
@@ -322,6 +343,7 @@ async function submitAuth() {
   const btn = $("fBtn"), label = mode === 'signup' ? "Create Account" : "Login";
   btn.disabled = true; btn.textContent = "Connecting...";
   try {
+    await ensureDb();
     if (mode === 'signup') {
       const name = $("fName").value.trim(), phone = $("fPhone").value.trim();
       if (!name) { showBox("fMsg", "⚠️ Naam bharein!", true); return; }
@@ -597,8 +619,9 @@ function loadProfile() {
   $("pLinkedIn").value = user.linkedin || "";
   $("pGithub").value = user.github || "";
   $("pPass").value = "";
-  const avatar = user.avatar_url || "https://via.placeholder.com/90";
+  const avatar = user.avatar_url || "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Crect width='90' height='90' fill='%23334155'/%3E%3Ccircle cx='45' cy='35' r='16' fill='%2394a3b8'/%3E%3Cellipse cx='45' cy='78' rx='28' ry='22' fill='%2394a3b8'/%3E%3C/svg%3E";
   $("pAvatarImg").src = avatar;
+  $("pAvatarImg").onerror = function(){ this.onerror=null; this.src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Crect width='90' height='90' fill='%23334155'/%3E%3Ccircle cx='45' cy='35' r='16' fill='%2394a3b8'/%3E%3Cellipse cx='45' cy='78' rx='28' ry='22' fill='%2394a3b8'/%3E%3C/svg%3E"; };
 }
 
 async function uploadAvatar(input) {
