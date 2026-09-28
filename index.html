@@ -229,558 +229,321 @@ th{ color: #a78bfa; }
 <script>
 const S_URL = "https://jdetqupmtgrrwzrufhsg.supabase.co";
 const S_KEY = "sb_publishable_QVtX3-gxQnXhsZC5tIwV8w_XXOGmmNI";
-let db = null;
-let mode = "login";
-let user = null;
+const BUCKET = "Vikram";
+let db = null, mode = "login", user = null;
 
-window.onload = function() {
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const todayStr = () => new Date().toLocaleDateString('en-CA'); // local date YYYY-MM-DD
+const nowTime = () => new Date().toLocaleTimeString('en-GB'); // HH:MM:SS
+function toSecs(t) { // handles "14:05:09" and "2:05:09 pm"
+  const m = String(t || '').trim().match(/^(\d{1,2}):(\d{2}):?(\d{2})?\s*([ap]m)?$/i);
+  if (!m) return NaN;
+  let h = +m[1]; const mi = +m[2], s = +(m[3] || 0), ap = (m[4] || '').toLowerCase();
+  if (ap === 'pm' && h < 12) h += 12;
+  if (ap === 'am' && h === 12) h = 0;
+  return h * 3600 + mi * 60 + s;
+}
+
+window.onload = async function () {
   try {
-    if(typeof supabase !== 'undefined') {
-      // persistSession/autoRefreshToken disabled, plus a no-op lock override,
-      // to fully bypass supabase-js's internal postMessage-based auth lock
-      // (was throwing DataCloneError: Headers object could not be cloned)
-      db = supabase.createClient(S_URL, S_KEY, {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-          detectSessionInUrl: false,
-          lock: async (name, acquireTimeout, fn) => { return await fn(); }
-        }
-      });
-      const saved = localStorage.getItem("v_user");
-      if(saved) {
-        user = JSON.parse(saved);
-        openDash();
+    db = supabase.createClient(S_URL, S_KEY, {
+      auth: {
+        persistSession: true, autoRefreshToken: true, detectSessionInUrl: false,
+        lock: async (name, acquireTimeout, fn) => { return await fn(); }
       }
-    }
-  } catch(e) { console.error(e); }
+    });
+    const { data } = await db.auth.getSession();
+    if (data && data.session) await loadUser(data.session.user);
+  } catch (e) { console.error(e); }
 };
 
 function setAuth(m) {
-  mode = m;
-  hideBox("fMsg");
-  if(m === 'signup') {
-    document.getElementById("tSignup").className = "active";
-    document.getElementById("tLogin").className = "";
-    document.getElementById("sFields").className = "";
-    document.getElementById("fBtn").textContent = "Create Account";
-  } else {
-    document.getElementById("tLogin").className = "active";
-    document.getElementById("tSignup").className = "";
-    document.getElementById("sFields").className = "hidden";
-    document.getElementById("fBtn").textContent = "Login";
-  }
+  mode = m; hideBox("fMsg");
+  $("tSignup").className = m === 'signup' ? "active" : "";
+  $("tLogin").className = m === 'login' ? "active" : "";
+  $("sFields").className = m === 'signup' ? "" : "hidden";
+  $("fBtn").textContent = m === 'signup' ? "Create Account" : "Login";
 }
-
 function showBox(id, txt, err) {
-  const el = document.getElementById(id);
-  if(!el) return;
-  el.textContent = txt;
-  el.className = "msg " + (err ? "err" : "succ");
-  el.classList.remove("hidden");
+  const el = $(id); if (!el) return;
+  el.textContent = txt; el.className = "msg " + (err ? "err" : "succ");
 }
+function hideBox(id) { const el = $(id); if (el) el.classList.add("hidden"); }
 
-function hideBox(id) {
-  const el = document.getElementById(id);
-  if(el) el.classList.add("hidden");
+async function loadUser(authUser) {
+  const { data, error } = await db.from('users')
+    .select('user_id, full_name, email, phone, role, status')
+    .eq('user_id', authUser.id).maybeSingle();
+  if (error || !data) {
+    showBox("fMsg", "❌ Profile nahi mili" + (error ? ": " + error.message : ". Dobara Sign Up karein."), true);
+    await db.auth.signOut(); return false;
+  }
+  user = data; openDash(); return true;
 }
 
 async function submitAuth() {
-  const email = document.getElementById("fEmail").value.trim();
-  const pass = document.getElementById("fPass").value;
-
-  if(!email || !pass) {
-    showBox("fMsg", "⚠️ Email aur Password bharein!", true);
-    return;
-  }
-
-  const btn = document.getElementById("fBtn");
-  btn.disabled = true;
-  btn.textContent = "Connecting...";
-  showBox("fMsg", "Connecting to database...", false);
-
+  const email = $("fEmail").value.trim(), pass = $("fPass").value;
+  if (!email || !pass) { showBox("fMsg", "⚠️ Email aur Password bharein!", true); return; }
+  const btn = $("fBtn"), label = mode === 'signup' ? "Create Account" : "Login";
+  btn.disabled = true; btn.textContent = "Connecting...";
   try {
-    if(mode === 'signup') {
-      const name = document.getElementById("fName").value.trim();
-      const phone = document.getElementById("fPhone").value.trim();
-      if(!name) { showBox("fMsg", "⚠️ Naam bharein!", true); btn.disabled = false; btn.textContent = "Create Account"; return; }
-
-      const { data, error } = await db.from('users').insert([{
-        full_name: name, email: email, phone: phone, password: pass, role: 'USER'
-      }]).select();
-
-      btn.disabled = false;
-      btn.textContent = "Create Account";
-
-      if(error) {
-        showBox("fMsg", "❌ Signup Error: " + error.message, true);
-      } else {
-        showBox("fMsg", "✅ Account Ban Gaya!", false);
-        user = data[0];
-        localStorage.setItem("v_user", JSON.stringify(user));
-        setTimeout(openDash, 500);
-      }
+    if (mode === 'signup') {
+      const name = $("fName").value.trim(), phone = $("fPhone").value.trim();
+      if (!name) { showBox("fMsg", "⚠️ Naam bharein!", true); return; }
+      if (pass.length < 6) { showBox("fMsg", "⚠️ Password kam se kam 6 akshar ka ho.", true); return; }
+      const { data, error } = await db.auth.signUp({ email, password: pass });
+      if (error) { showBox("fMsg", "❌ Signup Error: " + error.message, true); return; }
+      if (!data.session) { showBox("fMsg", "📧 Email confirm karke phir Login karein.", false); return; }
+      const { error: e2 } = await db.from('users').insert([{
+        user_id: data.user.id, full_name: name, email, phone, role: 'USER' }]);
+      if (e2) { showBox("fMsg", "❌ Profile Error: " + e2.message, true); return; }
+      await loadUser(data.user);
     } else {
-      const { data, error } = await db.from('users').select('*').eq('email', email).eq('password', pass);
-
-      btn.disabled = false;
-      btn.textContent = "Login";
-
-      if(error) {
-        showBox("fMsg", "❌ Login Error: " + error.message, true);
-      } else if(!data || data.length === 0) {
-        showBox("fMsg", "❌ Galat Email ya Password!", true);
-      } else {
-        showBox("fMsg", "✅ Login Successful!", false);
-        user = data[0];
-        localStorage.setItem("v_user", JSON.stringify(user));
-        setTimeout(openDash, 300);
-      }
+      const { data, error } = await db.auth.signInWithPassword({ email, password: pass });
+      if (error) { showBox("fMsg", "❌ " + error.message, true); return; }
+      await loadUser(data.user);
     }
-  } catch(err) {
-    btn.disabled = false;
-    btn.textContent = "Login";
-    showBox("fMsg", "Error: " + err.message, true);
-  }
+  } catch (err) { showBox("fMsg", "Error: " + err.message, true); }
+  finally { btn.disabled = false; btn.textContent = label; }
 }
 
 function openDash() {
-  document.getElementById("authPage").className = "card auth-card hidden";
-  document.getElementById("dashPage").className = "card";
-  document.getElementById("wMsg").textContent = "👋 Welcome, " + (user.full_name || "User");
-  document.getElementById("uBadge").textContent = user.role || "USER";
-
-  if(user.role === 'ADMIN') {
-    document.getElementById("adminVideoBox").classList.remove("hidden");
-    document.getElementById("nbAdmin").classList.remove("hidden");
-  } else {
-    document.getElementById("nbAdmin").classList.add("hidden");
-  }
-
+  $("authPage").className = "card auth-card hidden";
+  $("dashPage").className = "card";
+  $("wMsg").textContent = "👋 Welcome, " + (user.full_name || "User");
+  $("uBadge").textContent = user.role || "USER";
+  const admin = user.role === 'ADMIN';
+  $("nbAdmin").classList.toggle("hidden", !admin);
+  $("adminVideoBox").classList.toggle("hidden", !admin);
   showTab('dash');
 }
 
 function showTab(t) {
-  document.getElementById("tabDash").classList.add("hidden");
-  document.getElementById("tabLeave").classList.add("hidden");
-  document.getElementById("tabLearn").classList.add("hidden");
-  document.getElementById("tabAdmin").classList.add("hidden");
-  document.getElementById("tabProf").classList.add("hidden");
-
-  document.getElementById("nbDash").className = "nav-btn";
-  document.getElementById("nbLeave").className = "nav-btn";
-  document.getElementById("nbLearn").className = "nav-btn";
-  document.getElementById("nbAdmin").className = "nav-btn";
-  document.getElementById("nbProf").className = "nav-btn";
-
-  if(t === 'dash') {
-    document.getElementById("tabDash").classList.remove("hidden");
-    document.getElementById("nbDash").className = "nav-btn active";
-    loadAtt();
-  } else if(t === 'leave') {
-    document.getElementById("tabLeave").classList.remove("hidden");
-    document.getElementById("nbLeave").className = "nav-btn active";
-    loadMyLeaves();
-  } else if(t === 'learn') {
-    document.getElementById("tabLearn").classList.remove("hidden");
-    document.getElementById("nbLearn").className = "nav-btn active";
-    loadVideos();
-  } else if(t === 'admin') {
-    document.getElementById("tabAdmin").classList.remove("hidden");
-    document.getElementById("nbAdmin").className = "nav-btn active";
-    loadAdminData();
-  } else if(t === 'prof') {
-    document.getElementById("tabProf").classList.remove("hidden");
-    document.getElementById("nbProf").className = "nav-btn active";
-    loadProfile();
+  const map = { dash: 'Dash', leave: 'Leave', learn: 'Learn', admin: 'Admin', prof: 'Prof' };
+  for (const k in map) {
+    $("tab" + map[k]).classList.toggle("hidden", k !== t);
+    $("nb" + map[k]).className = "nav-btn" + (k === t ? " active" : "") + (k === 'admin' && user.role !== 'ADMIN' ? " hidden" : "");
   }
+  hideBox("dMsg");
+  if (t === 'dash') loadAtt();
+  else if (t === 'leave') loadMyLeaves();
+  else if (t === 'learn') loadVideos();
+  else if (t === 'admin') loadAdminData();
+  else if (t === 'prof') loadProfile();
 }
 
-// ===== ATTENDANCE LOGIC (FIXED: one row per user per day, proper check-out + hours) =====
-async function doAtt(st) {
-  const inBtn = document.getElementById("btnCheckIn");
-  const outBtn = document.getElementById("btnCheckOut");
-  inBtn.disabled = true;
-  outBtn.disabled = true;
+// ===== ATTENDANCE =====
+function doAtt(st) {
+  $("btnCheckIn").disabled = true; $("btnCheckOut").disabled = true;
   showBox("dMsg", "Saving Attendance...", false);
-
   if ("geolocation" in navigator) {
-    navigator.geolocation.getCurrentPosition((position) => {
-      const lat = position.coords.latitude;
-      const lon = position.coords.longitude;
-      const mapUrl = `https://www.google.com/maps?q=${lat},${lon}`;
-      saveAttendanceWithLocation(st, lat, lon, mapUrl);
-    }, (error) => {
-      saveAttendanceWithLocation(st, null, null, null);
-    }, { timeout: 2500 });
-  } else {
-    saveAttendanceWithLocation(st, null, null, null);
-  }
+    navigator.geolocation.getCurrentPosition(
+      p => saveAtt(st, p.coords.latitude, p.coords.longitude),
+      () => saveAtt(st, null, null), { timeout: 2500 });
+  } else saveAtt(st, null, null);
 }
 
-async function saveAttendanceWithLocation(st, lat, lon, mapUrl) {
-  const today = new Date().toISOString().slice(0,10);
-  const now = new Date();
-  const time = now.toLocaleTimeString();
-  const inBtn = document.getElementById("btnCheckIn");
-  const outBtn = document.getElementById("btnCheckOut");
-
+async function saveAtt(st, lat, lon) {
+  const today = todayStr(), time = nowTime();
+  const loc = (lat && lon) ? { latitude: String(lat), longitude: String(lon),
+    location_url: `https://www.google.com/maps?q=${lat},${lon}` } : {};
   try {
-    // Look for today's existing record for this user first
-    const { data: existing, error: fetchErr } = await db.from('attendance')
-      .select('*')
-      .eq('user_id', user.user_id)
-      .eq('date', today)
-      .limit(1);
-
-    if(fetchErr) {
-      showBox("dMsg", "Error: " + fetchErr.message, true);
-      inBtn.disabled = false; outBtn.disabled = false;
-      return;
-    }
-
-    const todayRec = (existing && existing.length > 0) ? existing[0] : null;
-
+    const { data: ex, error: fe } = await db.from('attendance').select('*')
+      .eq('user_id', user.user_id).eq('date', today).limit(1);
+    if (fe) throw fe;
+    const rec = ex && ex[0];
     if (st === 'CHECKED_IN') {
-      if (todayRec) {
-        showBox("dMsg", "⚠️ Aap aaj pehle hi Check In kar chuke hain!", true);
-        inBtn.disabled = false; outBtn.disabled = false;
-        return;
+      if (rec) { showBox("dMsg", "⚠️ Aap aaj pehle hi Check In kar chuke hain!", true); }
+      else {
+        const { error } = await db.from('attendance').insert([{
+          user_id: user.user_id, user_name: user.full_name, date: today,
+          check_in: time, check_out: null, status: 'CHECKED_IN', ...loc }]);
+        if (error) throw error;
+        showBox("dMsg", "✅ Checked In!", false);
       }
-
-      let insertObj = {
-        user_id: user.user_id,
-        user_name: user.full_name,
-        date: today,
-        check_in: time,
-        check_out: null,
-        status: st
-      };
-      if(lat && lon) {
-        insertObj.latitude = String(lat);
-        insertObj.longitude = String(lon);
-        insertObj.location_url = mapUrl;
+    } else {
+      if (!rec) showBox("dMsg", "⚠️ Pehle Check In karein!", true);
+      else if (rec.check_out) showBox("dMsg", "⚠️ Aap aaj pehle hi Check Out kar chuke hain!", true);
+      else {
+        let hrs = "--";
+        const d = toSecs(time) - toSecs(rec.check_in);
+        if (!isNaN(d) && d > 0) hrs = (d / 3600).toFixed(2);
+        const { error } = await db.from('attendance')
+          .update({ check_out: time, status: 'COMPLETED', total_hours: hrs, ...loc })
+          .eq('user_id', user.user_id).eq('date', today);
+        if (error) throw error;
+        showBox("dMsg", "✅ Checked Out! Total: " + hrs + " hrs", false);
       }
-
-      const { error } = await db.from('attendance').insert([insertObj]);
-      inBtn.disabled = false; outBtn.disabled = false;
-      if(error) { showBox("dMsg", "Error: " + error.message, true); return; }
-      showBox("dMsg", "✅ Checked In!", false);
-      loadAtt();
-
-    } else if (st === 'COMPLETED') {
-      if (!todayRec) {
-        showBox("dMsg", "⚠️ Pehle Check In karein!", true);
-        inBtn.disabled = false; outBtn.disabled = false;
-        return;
-      }
-      if (todayRec.check_out) {
-        showBox("dMsg", "⚠️ Aap aaj pehle hi Check Out kar chuke hain!", true);
-        inBtn.disabled = false; outBtn.disabled = false;
-        return;
-      }
-
-      let totalHours = "--";
-      if (todayRec.check_in) {
-        const inTime = new Date(`${today} ${todayRec.check_in}`);
-        const outTime = new Date(`${today} ${time}`);
-        const diffMs = outTime - inTime;
-        if (!isNaN(diffMs) && diffMs > 0) {
-          totalHours = (diffMs / (1000 * 60 * 60)).toFixed(2);
-        }
-      }
-
-      let updateObj = { check_out: time, status: st, total_hours: totalHours };
-      if(lat && lon) {
-        updateObj.latitude = String(lat);
-        updateObj.longitude = String(lon);
-        updateObj.location_url = mapUrl;
-      }
-
-      const { error } = await db.from('attendance')
-        .update(updateObj)
-        .eq('user_id', user.user_id)
-        .eq('date', today);
-
-      inBtn.disabled = false; outBtn.disabled = false;
-      if(error) { showBox("dMsg", "Error: " + error.message, true); return; }
-      showBox("dMsg", "✅ Checked Out! Total: " + totalHours + " hrs", false);
-      loadAtt();
     }
-  } catch(e) {
-    inBtn.disabled = false; outBtn.disabled = false;
-    showBox("dMsg", "Error: " + e.message, true);
-  }
+  } catch (e) { showBox("dMsg", "Error: " + e.message, true); }
+  $("btnCheckIn").disabled = false; $("btnCheckOut").disabled = false;
+  loadAtt();
 }
 
 async function loadAtt() {
-  try {
-    const today = new Date().toISOString().slice(0,10);
-    const { data } = await db.from('attendance').select('*').eq('user_id', user.user_id).order('created_at', { ascending: false });
-    const tbody = document.getElementById("attRows");
-    if(!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No records</td></tr>';
-      document.getElementById("uStatus").textContent = "Not Marked";
-      document.getElementById("uCheckIn").textContent = "--";
-      document.getElementById("uCheckOut").textContent = "--";
-      document.getElementById("uHours").textContent = "--";
-      return;
-    }
-
-    let todayRec = data.find(r => r.date === today);
-    if (todayRec) {
-      document.getElementById("uStatus").textContent = todayRec.status;
-      document.getElementById("uCheckIn").textContent = todayRec.check_in || "--";
-      document.getElementById("uCheckOut").textContent = todayRec.check_out || "--";
-      document.getElementById("uHours").textContent = todayRec.total_hours || "--";
-    } else {
-      document.getElementById("uStatus").textContent = "Not Marked";
-      document.getElementById("uCheckIn").textContent = "--";
-      document.getElementById("uCheckOut").textContent = "--";
-      document.getElementById("uHours").textContent = "--";
-    }
-
-    let html = "";
-    data.forEach(r => {
-      let locBtn = r.location_url ? `<a href="${r.location_url}" target="_blank" style="color:#38bdf8; text-decoration:none;">📍 Map</a>` : '--';
-      html += `<tr><td>${r.date}</td><td>${r.check_in||'--'}</td><td>${r.check_out||'--'}</td><td>${r.total_hours||'--'}</td><td><span class="badge ${r.status==='COMPLETED'?'badge-green':'badge-blue'}">${r.status}</span></td><td>${locBtn}</td></tr>`;
-    });
-    tbody.innerHTML = html;
-  } catch(e) { console.error(e); }
+  const { data, error } = await db.from('attendance').select('*')
+    .eq('user_id', user.user_id).order('created_at', { ascending: false });
+  if (error) { showBox("dMsg", "Error: " + error.message, true); return; }
+  const rows = data || [], t = rows.find(r => r.date === todayStr());
+  $("uStatus").textContent = t ? t.status : "Not Marked";
+  $("uCheckIn").textContent = (t && t.check_in) || "--";
+  $("uCheckOut").textContent = (t && t.check_out) || "--";
+  $("uHours").textContent = (t && t.total_hours) || "--";
+  $("attRows").innerHTML = rows.length ? rows.map(r => `<tr>
+    <td>${esc(r.date)}</td><td>${esc(r.check_in || '--')}</td><td>${esc(r.check_out || '--')}</td>
+    <td>${esc(r.total_hours || '--')}</td>
+    <td><span class="badge ${r.status === 'COMPLETED' ? 'badge-green' : 'badge-blue'}">${esc(r.status)}</span></td>
+    <td>${mapLink(r.location_url)}</td></tr>`).join('')
+    : '<tr><td colspan="6" style="text-align:center;">No records</td></tr>';
+}
+function mapLink(u) {
+  return u && /^https:\/\//.test(u) ? `<a href="${esc(u)}" target="_blank" rel="noopener" style="color:#38bdf8;text-decoration:none;">📍 Map</a>` : '--';
 }
 
-// LEAVE SYSTEM
+// ===== LEAVES =====
 async function applyLeave() {
-  const start = document.getElementById("lStart").value;
-  const end = document.getElementById("lEnd").value;
-  const reason = document.getElementById("lReason").value.trim();
-
-  if(!start || !end || !reason) return alert("Sabhi fields bharein!");
-
-  try {
-    const { error } = await db.from('leave_requests').insert([{
-      user_id: user.user_id,
-      user_name: user.full_name,
-      start_date: start,
-      end_date: end,
-      reason: reason
-    }]);
-
-    if(error) alert("Error: " + error.message);
-    else {
-      alert("✅ Leave request submitted!");
-      document.getElementById("lStart").value = "";
-      document.getElementById("lEnd").value = "";
-      document.getElementById("lReason").value = "";
-      loadMyLeaves();
-    }
-  } catch(e) { alert("Leave error: " + e.message); }
+  const s = $("lStart").value, e = $("lEnd").value, r = $("lReason").value.trim();
+  if (!s || !e || !r) return alert("Sabhi fields bharein!");
+  if (e < s) return alert("End date, start date se pehle nahi ho sakti!");
+  const { error } = await db.from('leave_requests').insert([{
+    user_id: user.user_id, user_name: user.full_name, start_date: s, end_date: e, reason: r, status: 'PENDING' }]);
+  if (error) return alert("Error: " + error.message);
+  alert("✅ Leave request submitted!");
+  $("lStart").value = ""; $("lEnd").value = ""; $("lReason").value = "";
+  loadMyLeaves();
 }
-
+const lBadge = s => `badge-${s === 'APPROVED' ? 'green' : s === 'REJECTED' ? 'red' : 'orange'}`;
 async function loadMyLeaves() {
-  try {
-    const { data } = await db.from('leave_requests').select('*').eq('user_id', user.user_id).order('created_at', { ascending: false });
-    const tbody = document.getElementById("myLeaveRows");
-    if(!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No leave applications found</td></tr>';
-      return;
-    }
-    let html = "";
-    data.forEach(l => {
-      let bClass = l.status==='APPROVED'?'badge-green':(l.status==='REJECTED'?'badge-red':'badge-orange');
-      html += `<tr><td>${l.start_date}</td><td>${l.end_date}</td><td>${l.reason}</td><td><span class="badge ${bClass}">${l.status}</span></td></tr>`;
-    });
-    tbody.innerHTML = html;
-  } catch(e) { console.error(e); }
+  const { data, error } = await db.from('leave_requests').select('*')
+    .eq('user_id', user.user_id).order('created_at', { ascending: false });
+  if (error) { showBox("dMsg", "Error: " + error.message, true); return; }
+  $("myLeaveRows").innerHTML = (data && data.length) ? data.map(l => `<tr>
+    <td>${esc(l.start_date)}</td><td>${esc(l.end_date)}</td><td>${esc(l.reason)}</td>
+    <td><span class="badge ${lBadge(l.status)}">${esc(l.status)}</span></td></tr>`).join('')
+    : '<tr><td colspan="4" style="text-align:center;">No leave applications found</td></tr>';
 }
 
-// VIDEO MANAGEMENT
+// ===== VIDEOS =====
 async function addVideo() {
-  const t = document.getElementById("vTitle").value.trim();
-  let u = document.getElementById("vUrl").value.trim();
-  const fileInput = document.getElementById("vFile");
-  const file = fileInput.files[0];
-  const btn = document.getElementById("vSaveBtn");
-
-  if(!t) return alert("Title zaroori hai!");
-  if(!u && !file) return alert("YouTube link daalein ya video file select karein!");
-
+  const t = $("vTitle").value.trim(); let u = $("vUrl").value.trim();
+  const file = $("vFile").files[0], btn = $("vSaveBtn");
+  if (!t) return alert("Title zaroori hai!");
+  if (!u && !file) return alert("YouTube link daalein ya video file select karein!");
   btn.disabled = true;
-
   try {
     if (file) {
-      // Upload the device video to Supabase Storage bucket "videos"
-      btn.textContent = "Uploading...";
-      document.getElementById("vUploadMsg").textContent = "Uploading video, please wait...";
-
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
-
-      const { error: upErr } = await db.storage.from('Vikram').upload(fileName, file);
-      if (upErr) {
-        alert("Upload Error: " + upErr.message + "\n\nMake sure a public Storage bucket named 'Vikram' exists in Supabase.");
-        btn.disabled = false;
-        btn.textContent = "Save Video";
-        document.getElementById("vUploadMsg").textContent = "";
-        return;
-      }
-
-      const { data: urlData } = db.storage.from('Vikram').getPublicUrl(fileName);
-      u = urlData.publicUrl;
-      document.getElementById("vUploadMsg").textContent = "";
+      btn.textContent = "Uploading..."; $("vUploadMsg").textContent = "Uploading video, please wait...";
+      const ext = file.name.split('.').pop();
+      const name = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error: ue } = await db.storage.from(BUCKET).upload(name, file);
+      if (ue) throw new Error("Upload: " + ue.message);
+      u = db.storage.from(BUCKET).getPublicUrl(name).data.publicUrl;
     } else {
-      if(u.includes("watch?v=")) u = "https://www.youtube.com/embed/" + u.split("watch?v=")[1].split("&")[0];
-      if(u.includes("youtu.be/")) u = "https://www.youtube.com/embed/" + u.split("youtu.be/")[1].split("?")[0];
+      const m = u.match(/(?:youtu\.be\/|v=|embed\/)([\w-]{11})/);
+      if (m) u = "https://www.youtube.com/embed/" + m[1];
     }
-
     const { error } = await db.from('videos').insert([{ title: t, video_url: u }]);
-    btn.disabled = false;
-    btn.textContent = "Save Video";
-
-    if(error) alert("Error: " + error.message);
-    else {
-      alert("✅ Video Saved!");
-      document.getElementById("vTitle").value = "";
-      document.getElementById("vUrl").value = "";
-      fileInput.value = "";
-      loadVideos();
-    }
-  } catch(e) {
-    btn.disabled = false;
-    btn.textContent = "Save Video";
-    alert("Error: " + e.message);
-  }
+    if (error) throw error;
+    alert("✅ Video Saved!");
+    $("vTitle").value = ""; $("vUrl").value = ""; $("vFile").value = "";
+    loadVideos();
+  } catch (e) { alert("Error: " + e.message); }
+  $("vUploadMsg").textContent = ""; btn.disabled = false; btn.textContent = "Save Video";
 }
-
 async function loadVideos() {
-  try {
-    const { data } = await db.from('videos').select('*').order('created_at', { ascending: false });
-    const box = document.getElementById("vList");
-    if(!data || data.length === 0) {
-      box.innerHTML = "<p style='color:#aaa;'>No videos available.</p>";
-      return;
-    }
-    let html = "";
-    data.forEach(v => {
-      const isYoutube = v.video_url.includes("youtube.com/embed");
-      const media = isYoutube
-        ? `<iframe src="${v.video_url}" allowfullscreen></iframe>`
-        : `<video src="${v.video_url}" controls style="width:100%; height:220px; border-radius:10px; background:#000;"></video>`;
-      html += `<div class="video-card">
-        ${media}
-        <h5 style="margin-top:10px; color:#38bdf8; font-size:16px;">${v.title}</h5>
-      </div>`;
-    });
-    box.innerHTML = html;
-  } catch(e) { console.error(e); }
+  const { data, error } = await db.from('videos').select('*').order('created_at', { ascending: false });
+  const box = $("vList");
+  if (error) { box.textContent = "Error: " + error.message; return; }
+  if (!data || !data.length) { box.innerHTML = "<p style='color:#aaa;'>No videos available.</p>"; return; }
+  box.innerHTML = data.map(v => {
+    const yt = (v.video_url || '').includes("youtube.com/embed");
+    const media = yt ? `<iframe src="${esc(v.video_url)}" allowfullscreen></iframe>`
+      : `<video src="${esc(v.video_url)}" controls style="width:100%;height:220px;border-radius:10px;background:#000;"></video>`;
+    return `<div class="video-card">${media}<h5 style="margin-top:10px;color:#38bdf8;font-size:16px;">${esc(v.title)}</h5></div>`;
+  }).join('');
 }
 
-// ADMIN PANEL & PDF EXPORT
+// ===== ADMIN =====
+let adminAtt = [];
 async function loadAdminData() {
+  const today = todayStr();
   try {
-    const today = new Date().toISOString().slice(0,10);
-    const { count: totalU } = await db.from('users').select('*', { count: 'exact', head: true });
-    const { count: todayAtt } = await db.from('attendance').select('*', { count: 'exact', head: true }).eq('date', today);
-    const { count: pendingL } = await db.from('leave_requests').select('*', { count: 'exact', head: true }).eq('status', 'PENDING');
+    const [uR, aR, lR] = await Promise.all([
+      db.from('users').select('user_id, full_name, email, phone, role, created_at').order('created_at', { ascending: false }),
+      db.from('attendance').select('*').order('created_at', { ascending: false }),
+      db.from('leave_requests').select('*').order('created_at', { ascending: false })
+    ]);
+    const err = uR.error || aR.error || lR.error;
+    if (err) { showBox("dMsg", "Admin Error: " + err.message, true); return; }
+    const users = uR.data || [], att = aR.data || [], leaves = lR.data || [];
+    adminAtt = att;
+    $("aTotalU").textContent = users.length;
+    $("aTodayAtt").textContent = att.filter(a => a.date === today).length;
+    $("aPendingL").textContent = leaves.filter(l => (l.status || 'PENDING') === 'PENDING').length;
 
-    document.getElementById("aTotalU").textContent = totalU || 0;
-    document.getElementById("aTodayAtt").textContent = todayAtt || 0;
-    document.getElementById("aPendingL").textContent = pendingL || 0;
+    $("aUsersTable").innerHTML = users.map(u => `<tr>
+      <td><b>${esc(u.full_name)}</b></td><td>${esc(u.email)}</td><td>${esc(u.phone || '--')}</td>
+      <td><span class="badge badge-blue">${esc(u.role)}</span></td>
+      <td>${u.user_id === user.user_id ? '--' : `<button class="btn-main" style="padding:4px 8px;font-size:11px;margin:0;"
+        onclick="setRole('${esc(u.user_id)}','${u.role === 'ADMIN' ? 'USER' : 'ADMIN'}')">${u.role === 'ADMIN' ? 'Make USER' : 'Make ADMIN'}</button>`}</td></tr>`).join('');
 
-    // Users
-    const { data: users } = await db.from('users').select('*').order('created_at', { ascending: false });
-    let uHtml = "";
-    (users||[]).forEach(u => {
-      uHtml += `<tr><td><b>${u.full_name}</b></td><td>${u.email}</td><td>${u.phone||'--'}</td><td><span class="badge badge-blue">${u.role}</span></td><td><button class="btn-main" style="padding:4px 8px; font-size:11px; margin:0;" onclick="makeAdmin('${u.user_id}')">Make ADMIN</button></td></tr>`;
-    });
-    document.getElementById("aUsersTable").innerHTML = uHtml;
+    $("aAttTable").innerHTML = att.length ? att.map(a => `<tr>
+      <td>${esc(a.date)}</td><td><b>${esc(a.user_name)}</b></td><td>${esc(a.check_in || '--')}</td>
+      <td>${esc(a.check_out || '--')}</td><td>${esc(a.total_hours || '--')}</td>
+      <td><span class="badge badge-green">${esc(a.status)}</span></td><td>${mapLink(a.location_url)}</td></tr>`).join('')
+      : '<tr><td colspan="7" style="text-align:center;">No records</td></tr>';
 
-    // Attendance
-    const { data: att } = await db.from('attendance').select('*').order('created_at', { ascending: false });
-    let aHtml = "";
-    (att||[]).forEach(a => {
-      let locBtn = a.location_url ? `<a href="${a.location_url}" target="_blank" style="color:#38bdf8; font-weight:bold;">📍 Map Link</a>` : '--';
-      aHtml += `<tr><td>${a.date}</td><td><b>${a.user_name}</b></td><td>${a.check_in||'--'}</td><td>${a.check_out||'--'}</td><td>${a.total_hours||'--'}</td><td><span class="badge badge-green">${a.status}</span></td><td>${locBtn}</td></tr>`;
-    });
-    document.getElementById("aAttTable").innerHTML = aHtml;
-
-    // Leaves
-    const { data: leaves } = await db.from('leave_requests').select('*').order('created_at', { ascending: false });
-    let lHtml = "";
-    (leaves||[]).forEach(l => {
-      let actions = l.status === 'PENDING' ? `<button onclick="updateLeaveStatus('${l.leave_id}','APPROVED')" style="background:#10b981; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">Approve</button> <button onclick="updateLeaveStatus('${l.leave_id}','REJECTED')" style="background:#ef4444; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">Reject</button>` : `<span class="badge ${l.status==='APPROVED'?'badge-green':'badge-red'}">${l.status}</span>`;
-      lHtml += `<tr><td><b>${l.user_name}</b></td><td>${l.start_date} to ${l.end_date}</td><td>${l.reason}</td><td>${l.status}</td><td>${actions}</td></tr>`;
-    });
-    document.getElementById("aLeaveTable").innerHTML = lHtml;
-
-  } catch(e) { console.error(e); }
+    $("aLeaveTable").innerHTML = leaves.length ? leaves.map(l => {
+      const st = l.status || 'PENDING';
+      const act = st === 'PENDING'
+        ? `<button onclick="updateLeaveStatus('${esc(l.leave_id)}','APPROVED')" style="background:#10b981;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">Approve</button>
+           <button onclick="updateLeaveStatus('${esc(l.leave_id)}','REJECTED')" style="background:#ef4444;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">Reject</button>`
+        : `<span class="badge ${lBadge(st)}">${esc(st)}</span>`;
+      return `<tr><td><b>${esc(l.user_name)}</b></td><td>${esc(l.start_date)} to ${esc(l.end_date)}</td>
+        <td>${esc(l.reason)}</td><td>${esc(st)}</td><td>${act}</td></tr>`;
+    }).join('') : '<tr><td colspan="5" style="text-align:center;">No applications</td></tr>';
+  } catch (e) { showBox("dMsg", "Admin Error: " + e.message, true); }
 }
-
-async function updateLeaveStatus(lId, st) {
-  await db.from('leave_requests').update({ status: st }).eq('leave_id', lId);
+async function updateLeaveStatus(id, st) {
+  const { error } = await db.from('leave_requests').update({ status: st }).eq('leave_id', id);
+  if (error) showBox("dMsg", "❌ " + error.message, true);
   loadAdminData();
 }
-
-async function makeAdmin(uId) {
-  await db.from('users').update({ role: 'ADMIN' }).eq('user_id', uId);
-  alert("User is now ADMIN!");
+async function setRole(id, role) {
+  const { error } = await db.rpc('set_user_role', { target: id, new_role: role });
+  if (error) alert("Error: " + error.message); else alert("Role update ho gaya: " + role);
   loadAdminData();
 }
-
-async function exportAttendancePDF() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-
+function exportAttendancePDF() {
+  const { jsPDF } = window.jspdf, doc = new jsPDF();
   doc.text("VIK4NT.INC - Attendance Report", 14, 15);
-  doc.autoTable({ html: '#aAttTable', startY: 20 });
-
-  const blob = doc.output('blob');
-  try {
-    const downloads = await claude.use("downloads");
-    if (downloads) {
-      await downloads.save({ filename: "Attendance_Report.pdf", data: blob });
-    } else {
-      doc.save("Attendance_Report.pdf");
-    }
-  } catch(e) {
-    console.error("Download error:", e);
-  }
+  doc.autoTable({
+    startY: 20, head: [['Date', 'Employee', 'In', 'Out', 'Hours', 'Status']],
+    body: adminAtt.map(a => [a.date, a.user_name, a.check_in || '--', a.check_out || '--', a.total_hours || '--', a.status])
+  });
+  doc.save("Attendance_Report.pdf");
 }
 
+// ===== PROFILE =====
 function loadProfile() {
-  document.getElementById("pName").value = user.full_name || "";
-  document.getElementById("pEmail").value = user.email || "";
-  document.getElementById("pPhone").value = user.phone || "";
+  $("pName").value = user.full_name || ""; $("pEmail").value = user.email || "";
+  $("pPhone").value = user.phone || ""; $("pPass").value = "";
 }
-
 async function updateProfile() {
-  const name = document.getElementById("pName").value.trim();
-  const phone = document.getElementById("pPhone").value.trim();
-  const pass = document.getElementById("pPass").value;
-
-  let updatePayload = { full_name: name, phone: phone };
-  if(pass) updatePayload.password = pass;
-
-  try {
-    const { data, error } = await db.from('users')
-      .update(updatePayload)
-      .eq('user_id', user.user_id)
-      .select().single();
-
-    if(error) {
-      showBox("pMsg", "Error: " + error.message, true);
-    } else {
-      user = data;
-      localStorage.setItem("v_user", JSON.stringify(user));
-      showBox("pMsg", "✅ Profile updated!", false);
-    }
-  } catch(e) { showBox("pMsg", "Error: " + e.message, true); }
+  const name = $("pName").value.trim(), phone = $("pPhone").value.trim(), pass = $("pPass").value;
+  const { error } = await db.from('users').update({ full_name: name, phone }).eq('user_id', user.user_id);
+  if (error) { showBox("pMsg", "Error: " + error.message, true); return; }
+  if (pass) {
+    const { error: e2 } = await db.auth.updateUser({ password: pass });
+    if (e2) { showBox("pMsg", "Error: " + e2.message, true); return; }
+  }
+  user.full_name = name; user.phone = phone;
+  $("wMsg").textContent = "👋 Welcome, " + name;
+  showBox("pMsg", "✅ Profile updated!", false);
 }
 
-function logout() {
-  localStorage.removeItem("v_user");
-  location.reload();
-}
+async function logout() { await db.auth.signOut(); user = null; location.reload(); }
 </script>
 </body>
 </html>
