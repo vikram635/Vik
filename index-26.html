@@ -975,15 +975,23 @@ async function loadInbox() {
 }
 
 async function replyContact(id) {
-  const t = $("rp" + id).value.trim(); if (!t) return;
-  const { error } = await db.from('contact_admin').update({ reply: t, replied_at: new Date().toISOString(), status: 'REPLIED' }).eq('id', id);
-  if (error) showBox("dMsg", "❌ " + error.message, true); else loadInbox();
+  const box = $("rp" + id), t = box ? box.value.trim() : "";
+  if (!t) { alert("Pehle reply likhein"); return; }
+  const { data, error } = await db.from('contact_admin')
+    .update({ reply: t, replied_at: new Date().toISOString(), status: 'REPLIED' })
+    .eq('id', id).select();
+  if (error) { alert("❌ Reply fail: " + error.message); return; }
+  if (!data || !data.length) { alert("❌ Reply save nahi hua: Supabase policy ne update block kiya. Update policy wali SQL run karein."); return; }
+  alert("✅ Reply bhej diya");
+  loadInbox();
 }
 
 async function delContact(id) {
   if (!confirm("Ye message delete karein?")) return;
-  const { error } = await db.from('contact_admin').delete().eq('id', id);
-  if (error) showBox("dMsg", "❌ " + error.message, true); else loadInbox();
+  const { data, error } = await db.from('contact_admin').delete().eq('id', id).select();
+  if (error) { alert("❌ " + error.message); return; }
+  if (!data || !data.length) { alert("❌ Delete nahi hua: policy ne block kiya."); return; }
+  loadInbox();
 }
 
 // ===== ADMIN VAULT (AES-GCM, browser me encrypt; server par sirf ciphertext) =====
