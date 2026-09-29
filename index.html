@@ -130,6 +130,14 @@ tbody tr:hover{ background: rgba(20,184,166,0.08); }
 
 /* Square (no rounded corners) dashboard elements */
 .stat-box, .btn-att, button.btn-main, button.btn-pdf, button.btn-csv, .nav-btn, .tabs button, .hamburger-btn, .video-card, .video-card iframe, .msg, table{ border-radius:0 !important; }
+
+/* Readable success/error messages on light dashboard theme */
+#dashPage .succ{ background:#dcfce7; color:#166534; border:1px solid #16a34a; }
+#dashPage .err{ background:#fee2e2; color:#991b1b; border:1px solid #dc2626; }
+
+/* Dashboard: square video + inline-styled boxes/buttons (avatars stay round) */
+#dashPage video, #dashPage iframe,
+#dashPage [style*="border-radius"]:not([style*="50%"]){ border-radius:0 !important; }
 </style>
 </head>
 <body>
@@ -656,7 +664,7 @@ async function loadVideos() {
   box.innerHTML = data.map(v => {
     const yt = (v.video_url || '').includes("youtube.com/embed");
     const media = yt ? `<iframe src="${esc(v.video_url)}" allowfullscreen></iframe>`
-      : `<video src="${esc(v.video_url)}" controls style="width:100%;height:220px;border-radius:10px;background:#000;"></video>`;
+      : `<video src="${esc(v.video_url)}" controls style="width:100%;height:220px;border-radius:0;background:#000;"></video>`;
     return `<div class="video-card">${media}<h5 style="margin-top:10px;color:#38bdf8;font-size:16px;">${esc(v.title)}</h5></div>`;
   }).join('');
 }
