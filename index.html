@@ -40,6 +40,25 @@ button.btn-csv{ background: linear-gradient(135deg, #2563eb, #1d4ed8); width: au
 .nav-btn{ background: rgba(255,255,255,0.08); color: #fff; border: 1px solid var(--border); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; }
 .nav-btn.active{ background: var(--purple-glow); border-color: var(--purple-glow); }
 
+.dash-layout{ display:flex; gap:20px; align-items:flex-start; }
+.sidebar{ width:220px; flex-shrink:0; display:flex; flex-direction:column; gap:6px; background:rgba(15,23,42,0.6); border:1px solid var(--border); border-radius:14px; padding:12px; }
+.sidebar button{ display:flex; align-items:center; gap:10px; text-align:left; width:100%; background:transparent; border:none; color:#cbd5e1; padding:12px 14px; border-radius:10px; cursor:pointer; font-weight:600; font-size:14px; }
+.sidebar button:hover{ background:rgba(255,255,255,0.06); }
+.sidebar button.active{ background:linear-gradient(135deg, #7c3aed, #2563eb); color:#fff; }
+.dash-main{ flex:1; min-width:0; }
+#sidebarOverlay{ display:none; }
+.hamburger-btn{ display:none; background:rgba(255,255,255,0.08); border:1px solid var(--border); color:#fff; width:40px; height:40px; border-radius:8px; cursor:pointer; font-size:18px; }
+
+@media (max-width: 760px){
+  .hamburger-btn{ display:block; }
+  .dash-layout{ display:block; }
+  .sidebar{ position:fixed; top:0; left:0; height:100%; z-index:200; width:230px; border-radius:0; transform:translateX(-100%); transition:transform 0.25s ease; overflow-y:auto; }
+  .sidebar.open{ transform:translateX(0); }
+  #sidebarOverlay.open{ display:block; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:150; }
+  .dash-main{ width:100%; }
+}
+
+
 .stats-grid{ display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
 .stat-box{ background: rgba(15, 23, 42, 0.7); padding: 18px; border-radius: 14px; border: 1px solid var(--border); }
 .stat-box small{ color: #94a3b8; font-size: 11px; text-transform: uppercase; font-weight: 600; }
@@ -77,8 +96,7 @@ th{ color: #a78bfa; }
 
   <!-- AUTH PAGE -->
   <div id="authPage" class="card auth-card">
-    <div class="brand-title">👑 VIK4NT.INC</div>
-    <div class="brand-subtitle">Attendance & Learning Portal</div>
+    <div class="brand-title"><span style="color:#fff;">VIK4NT</span><span style="color:#ef4444;">.INC</span></div>
 
     <div class="tabs">
       <button id="tLogin" class="active" onclick="setAuth('login')">Login</button>
@@ -113,6 +131,7 @@ th{ color: #a78bfa; }
   <div id="dashPage" class="card hidden">
     <div class="header">
       <div style="display:flex; align-items:center; gap:12px;">
+        <button class="hamburger-btn" onclick="toggleSidebar()">☰</button>
         <img id="headerAvatar" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Crect width='90' height='90' fill='%23334155'/%3E%3Ccircle cx='45' cy='35' r='16' fill='%2394a3b8'/%3E%3Cellipse cx='45' cy='78' rx='28' ry='22' fill='%2394a3b8'/%3E%3C/svg%3E" class="profile-avatar" style="width:45px; height:45px; margin-bottom:0;" alt="Avatar">
         <div>
           <h3 id="wMsg" style="font-size:20px;">👋 Welcome</h3>
@@ -122,13 +141,16 @@ th{ color: #a78bfa; }
       <button onclick="logout()" style="background:#dc2626; color:#fff; border:none; padding:8px 14px; border-radius:8px; cursor:pointer; font-weight:bold;">Logout</button>
     </div>
 
-    <div class="nav-btns">
-      <button id="nbDash" class="nav-btn active" onclick="showTab('dash')">🏠 Attendance</button>
-      <button id="nbLeave" class="nav-btn" onclick="showTab('leave')">📅 Leave Request</button>
-      <button id="nbLearn" class="nav-btn" onclick="showTab('learn')">📚 Training</button>
-      <button id="nbAdmin" class="nav-btn hidden" onclick="showTab('admin')">👑 Admin Panel</button>
-      <button id="nbProf" class="nav-btn" onclick="showTab('prof')">👤 Profile</button>
-    </div>
+    <div id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    <div class="dash-layout">
+      <div class="sidebar" id="sideNav">
+        <button id="nbDash" class="nav-btn active" onclick="showTab('dash')">🏠 Attendance</button>
+        <button id="nbLeave" class="nav-btn" onclick="showTab('leave')">📅 Leave Request</button>
+        <button id="nbLearn" class="nav-btn" onclick="showTab('learn')">📚 Training</button>
+        <button id="nbAdmin" class="nav-btn hidden" onclick="showTab('admin')">👑 Admin Panel</button>
+        <button id="nbProf" class="nav-btn" onclick="showTab('prof')">👤 Profile</button>
+      </div>
+      <div class="dash-main">
 
     <!-- TAB 1: ATTENDANCE -->
     <div id="tabDash">
@@ -257,6 +279,9 @@ th{ color: #a78bfa; }
         <button class="btn-main" onclick="updateProfile()">Save Changes</button>
       </div>
       <div id="pMsg" class="msg hidden"></div>
+    </div>
+
+      </div>
     </div>
 
     <div id="dMsg" class="msg hidden"></div>
@@ -435,6 +460,15 @@ function showTab(t) {
   else if (t === 'learn') loadVideos();
   else if (t === 'admin') loadAdminData();
   else if (t === 'prof') loadProfile();
+  closeSidebar();
+}
+function toggleSidebar() {
+  $("sideNav").classList.toggle("open");
+  $("sidebarOverlay").classList.toggle("open");
+}
+function closeSidebar() {
+  $("sideNav").classList.remove("open");
+  $("sidebarOverlay").classList.remove("open");
 }
 
 // ===== ATTENDANCE =====
