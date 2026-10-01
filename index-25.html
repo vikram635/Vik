@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIK4NT.INC Portal</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f172a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="VIK4NT">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- Supabase & PDF Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+*{ box-sizing:border-box; margin:0; padding:0; }
+:root{
+  --bg-gradient: linear-gradient(160deg, #7dd3fc 0%, #38bdf8 35%, #2563eb 70%, #1e3a8a 100%);
+  --card-bg: rgba(30, 41, 59, 0.85);
+  --border: rgba(255, 255, 255, 0.15);
+  --purple-glow: #8b5cf6;
+}
+body{ font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg-gradient); background-attachment: fixed; color: #fff; min-height: 100vh; padding: 15px; }
+body.light-mode{ background: #f4f5f7; }
+.container{ width: 100%; max-width: 1000px; margin: auto; }
+.card{ background: var(--card-bg); backdrop-filter: blur(16px); border-radius: 20px; padding: 25px; border: 1px solid var(--border); box-shadow: 0 15px 35px rgba(0,0,0,0.5); margin-bottom: 20px; }
+.auth-card{ max-width: 420px; margin: 40px auto; }
+
+.brand-title{ text-align: center; color: #a78bfa; font-size: 28px; font-weight: 800; }
+.brand-subtitle{ text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 20px; }
+
+.tabs{ display: flex; gap: 10px; margin-bottom: 20px; }
+.tabs button{ flex: 1; padding: 12px; border: none; border-radius: 12px; background: rgba(255,255,255,0.08); color: #fff; font-weight: bold; cursor: pointer; }
+.tabs button.active{ background: linear-gradient(135deg, #7c3aed, #2563eb); }
+
+input, textarea, select{ width: 100%; padding: 12px; margin: 8px 0; border-radius: 0; border: 1px solid var(--border); background: rgba(15, 23, 42, 0.9); color: #fff; font-size: 14px; outline: none; }
+
+button.btn-main{ width: 100%; padding: 14px; margin-top: 10px; border: none; border-radius: 10px; background: linear-gradient(135deg, #7c3aed, #2563eb); color: #fff; font-weight: bold; font-size: 16px; cursor: pointer; }
+button.btn-pdf{ background: linear-gradient(135deg, #059669, #10b981); width: auto; padding: 10px 18px; margin-bottom: 15px; border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer; }
+button.btn-csv{ background: linear-gradient(135deg, #2563eb, #1d4ed8); width: auto; padding: 10px 18px; margin-bottom: 15px; border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer; }
+
+.header{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+.nav-btns{ display: flex; gap: 8px; flex-wrap: wrap; }
+.nav-btn{ background: rgba(255,255,255,0.08); color: #fff; border: 1px solid var(--border); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; }
+.nav-btn.active{ background: var(--purple-glow); border-color: var(--purple-glow); }
+
+.dash-layout{ display:flex; gap:20px; align-items:flex-start; }
+.sidebar{ width:220px; flex-shrink:0; display:flex; flex-direction:column; gap:6px; background:rgba(15,23,42,0.6); border:1px solid var(--border); border-radius:0; padding:12px; }
+.sidebar button{ display:flex; align-items:center; gap:10px; text-align:left; width:100%; background:transparent; border:none; color:#cbd5e1; padding:12px 14px; border-radius:0; cursor:pointer; font-weight:600; font-size:14px; }
+.sidebar button:hover{ background:rgba(255,255,255,0.06); }
+.sidebar button.active{ background:linear-gradient(135deg, #7c3aed, #2563eb); color:#fff; }
+.sidebar button:nth-child(1){ border-left:4px solid #f59e0b; background:rgba(245,158,11,0.12); }
+.sidebar button:nth-child(2){ border-left:4px solid #ef4444; background:rgba(239,68,68,0.12); }
+.sidebar button:nth-child(3){ border-left:4px solid #0ea5e9; background:rgba(14,165,233,0.12); }
+.sidebar button:nth-child(4){ border-left:4px solid #22c55e; background:rgba(34,197,94,0.12); }
+.sidebar button:nth-child(5){ border-left:4px solid #a855f7; background:rgba(168,85,247,0.12); }
+.sidebar button:nth-child(6){ border-left:4px solid #6366f1; background:rgba(99,102,241,0.12); }
+.sidebar button:nth-child(7){ border-left:4px solid #14b8a6; background:rgba(20,184,166,0.12); }
+.sidebar button.active{ border-left-color:#fff !important; }
+.sidebar button.active, #dashPage .sidebar button.active{ background:linear-gradient(135deg, #7c3aed, #2563eb) !important; color:#fff !important; }
+.dash-main{ flex:1; min-width:0; }
+#sidebarOverlay{ display:none; }
+.hamburger-btn{ display:none; background:rgba(255,255,255,0.08); border:1px solid var(--border); color:#fff; width:40px; height:40px; border-radius:8px; cursor:pointer; font-size:18px; }
+
+@media (max-width: 760px){
+  .hamburger-btn{ display:block; }
+  .dash-layout{ display:block; }
+  .sidebar{ position:fixed; top:0; left:0; height:100%; z-index:200; width:230px; border-radius:0; transform:translateX(-100%); transition:transform 0.25s ease; overflow-y:auto; }
+  .sidebar.open{ transform:translateX(0); }
+  #sidebarOverlay.open{ display:block; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:150; }
+  .dash-main{ width:100%; }
+}
+
+
+.stats-grid{ display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
+.stat-box{ background: rgba(15, 23, 42, 0.7); padding: 18px; border-radius: 14px; border: 1px solid var(--border); }
+.stat-box small{ color: #94a3b8; font-size: 11px; text-transform: uppercase; font-weight: 600; }
+.stat-box strong{ display: block; font-size: 22px; margin-top: 6px; color: #fff; }
+
+.btn-att{ padding: 16px; width: 100%; margin: 8px 0; font-size: 17px; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; color: #fff; }
+.btn-att:disabled{ opacity: 0.5; cursor: not-allowed; }
+.checkin{ background: linear-gradient(135deg, #059669, #10b981); }
+.checkout{ background: linear-gradient(135deg, #ea580c, #f97316); }
+
+table{ width: 100%; border-collapse: collapse; margin-top: 15px; text-align: left; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+th, td{ padding: 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
+td{ border-right: 1px solid rgba(255,255,255,0.06); }
+th{ color: #fff; background: linear-gradient(135deg, #0f766e, #14b8a6); font-weight: 700; border-right: 1px solid rgba(255,255,255,0.15); }
+tbody tr:nth-child(even){ background: rgba(255,255,255,0.03); }
+tbody tr:hover{ background: rgba(20,184,166,0.08); }
+
+/* ===== Light "report" theme — dashboard only, login/signup untouched ===== */
+#dashPage{ background:#f4f5f7; color:#1e293b; border-color:#d0d5dd; border-radius:0; box-shadow:none; margin:-15px -15px 20px -15px; width:calc(100% + 30px); }
+#dashPage .header{ border-bottom-color:#d0d5dd; }
+#dashPage h3, #dashPage h4, #dashPage h5{ color:#1e293b; }
+#dashPage small{ color:#64748b; }
+#dashPage .stat-box{ background:#ffffff; border-color:#d0d5dd; }
+#dashPage .stat-box strong{ color:#111827; }
+#dashPage .stat-box:nth-child(1){ border-left:4px solid #f59e0b; background:rgba(245,158,11,0.08); }
+#dashPage .stat-box:nth-child(2){ border-left:4px solid #ef4444; background:rgba(239,68,68,0.08); }
+#dashPage .stat-box:nth-child(3){ border-left:4px solid #0ea5e9; background:rgba(14,165,233,0.08); }
+#dashPage .stat-box:nth-child(4){ border-left:4px solid #22c55e; background:rgba(34,197,94,0.08); }
+#dashPage .stat-box:nth-child(5){ border-left:4px solid #a855f7; background:rgba(168,85,247,0.08); }
+#dashPage .stat-box:nth-child(6){ border-left:4px solid #14b8a6; background:rgba(20,184,166,0.08); }
+#dashPage .sidebar{ background:#ffffff; border-color:#d0d5dd; }
+#dashPage .sidebar button{ color:#334155; }
+#dashPage .sidebar button:hover{ background:#f1f5f9; }
+#dashPage .sidebar button.active{ color:#fff; }
+#dashPage .hamburger-btn{ background:#ffffff; border-color:#d0d5dd; color:#1e293b; }
+#dashPage input, #dashPage textarea, #dashPage select{ background:#ffffff; color:#111827; border-color:#cbd5e1; }
+#dashPage table{ border-color:#d0d5dd; }
+#dashPage th{ background:#2f5f8a; color:#fff; border-right-color:rgba(255,255,255,0.2); }
+#dashPage td{ border-color:#e2e8f0; }
+#dashPage tbody tr:nth-child(even){ background:#f1f3f5; }
+#dashPage tbody tr:hover{ background:#e8f0fe; }
+#dashPage label{ color:#334155; }
+
+.badge{ display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; }
+.badge-green{ background: rgba(16,185,129,0.2); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+.badge-blue{ background: rgba(37,99,235,0.2); color: #93c5fd; border: 1px solid rgba(37,99,235,0.3); }
+.badge-orange{ background: rgba(249,115,22,0.2); color: #fdba74; border: 1px solid rgba(249,115,22,0.3); }
+.badge-red{ background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+
+.video-card{ background: rgba(15, 23, 42, 0.9); border-radius: 14px; border: 1px solid var(--border); padding: 15px; margin-bottom: 15px; }
+.video-card iframe{ width: 100%; height: 220px; border-radius: 10px; border: none; }
+
+.profile-avatar{ width: 90px; height: 90px; border-radius: 0; object-fit: cover; border: 2px solid var(--purple-glow); margin-bottom: 10px; }
+
+.msg{ margin-top: 15px; padding: 12px; border-radius: 10px; font-size: 14px; text-align: center; font-weight: bold; word-break: break-all; }
+.err{ background: rgba(239,68,68,0.3); color: #fca5a5; border: 1px solid #ef4444; }
+.succ{ background: rgba(16,185,129,0.3); color: #86efac; border: 1px solid #10b981; }
+.hidden{ display: none !important; }
+
+/* Square (no rounded corners) dashboard elements */
+.stat-box, .btn-att, button.btn-main, button.btn-pdf, button.btn-csv, .nav-btn, .tabs button, .hamburger-btn, .video-card, .video-card iframe, .msg, table{ border-radius:0 !important; }
+
+/* Readable success/error messages on light dashboard theme */
+#dashPage .succ{ background:#dcfce7; color:#166534; border:1px solid #16a34a; }
+#dashPage .err{ background:#fee2e2; color:#991b1b; border:1px solid #dc2626; }
+
+/* Dashboard: square video + inline-styled boxes/buttons (avatars stay round) */
+#dashPage video, #dashPage iframe,
+#dashPage [style*="border-radius"]:not([style*="50%"]){ border-radius:0 !important; }
+
+.sidebar button:nth-child(8){ border-left:4px solid #ec4899; background:rgba(236,72,153,0.12); }
+.sidebar button:nth-child(9){ border-left:4px solid #eab308; background:rgba(234,179,8,0.12); }
+.sidebar button:nth-child(10){ border-left:4px solid #06b6d4; background:rgba(6,182,212,0.12); }
+.sidebar button:nth-child(11){ border-left:4px solid #f43f5e; background:rgba(244,63,94,0.12); }
+.sidebar button:nth-child(12){ border-left:4px solid #84cc16; background:rgba(132,204,22,0.12); }
+.ct-card{ background:#fff; border:1px solid #d0d5dd; padding:12px; margin-top:10px; color:#1e293b; font-size:14px; }
+.ct-reply{ background:#ecfdf5; border-left:4px solid #10b981; padding:8px 10px; margin-top:8px; }
+.comm{ display:grid; grid-template-columns:240px 1fr; gap:15px; align-items:start; }
+.c-list{ background:#fff; border:1px solid #d0d5dd; max-height:520px; overflow-y:auto; }
+.c-user{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid #e2e8f0; cursor:pointer; color:#1e293b; }
+.c-user:hover, .c-user.sel{ background:#e8f0fe; }
+.c-user img, .c-head img{ width:42px; height:42px; border-radius:0; object-fit:cover; border:2px solid #f59e0b; }
+.c-pane{ border:1px solid #d0d5dd; background:#fff; min-height:200px; }
+.c-head{ background:linear-gradient(135deg,#f59e0b,#b45309); color:#fff; padding:14px; display:flex; gap:12px; align-items:center; }
+.c-head img{ width:60px; height:60px; border-color:#fff; }
+.c-info{ padding:10px 14px; background:#1e293b; color:#e2e8f0; font-size:13px; line-height:1.6; word-break:break-word; }
+.c-msgs{ height:300px; overflow-y:auto; padding:12px; background:#f1f3f5; display:flex; flex-direction:column; gap:6px; }
+.c-b{ max-width:80%; padding:8px 12px; font-size:14px; word-break:break-word; }
+.c-b.me{ align-self:flex-end; background:#7c3aed; color:#fff; }
+.c-b.them{ align-self:flex-start; background:#fff; color:#1e293b; border:1px solid #d0d5dd; }
+.c-b small{ display:block; font-size:10px; opacity:.7; margin-top:2px; }
+.c-send{ display:flex; gap:6px; padding:8px; border-top:1px solid #d0d5dd; }
+.c-send input{ margin:0; flex:1; }
+.c-send button{ border:none; background:#7c3aed; color:#fff; padding:0 18px; font-weight:bold; cursor:pointer; }
+@media (max-width:760px){ .comm{ grid-template-columns:1fr; } .c-list{ max-height:200px; } }
+
+/* Sidebar: saare buttons ek screen par dikhein (laptop) */
+@media (min-width:761px){
+  .sidebar{ position:sticky; top:8px; max-height:calc(100vh - 16px); overflow-y:auto; gap:3px; padding:8px; scrollbar-width:thin; }
+  .sidebar button{ padding:8px 12px; font-size:13px; }
+}
+@media (max-width:760px){
+  .sidebar button{ padding:11px 14px; }
+}
+
+/* ================= VIK4NT THEME ================= */
+body{ font-family:'Poppins','Segoe UI',Arial,sans-serif; }
+
+/* ---------- LOGIN / SIGNUP ---------- */
+body:has(#authPage:not(.hidden)), body:has(#resetPage:not(.hidden)){
+  background:#070b1a; background-attachment:fixed; overflow-x:hidden;
+}
+body:has(#authPage:not(.hidden))::before, body:has(#authPage:not(.hidden))::after,
+body:has(#resetPage:not(.hidden))::before, body:has(#resetPage:not(.hidden))::after{
+  content:""; position:fixed; border-radius:50%; filter:blur(90px); opacity:.55; z-index:-1; pointer-events:none;
+}
+body:has(#authPage:not(.hidden))::before, body:has(#resetPage:not(.hidden))::before{
+  width:480px; height:480px; background:#7c3aed; top:-120px; left:-100px; animation:orbA 14s ease-in-out infinite alternate;
+}
+body:has(#authPage:not(.hidden))::after, body:has(#resetPage:not(.hidden))::after{
+  width:420px; height:420px; background:#0ea5e9; bottom:-140px; right:-100px; animation:orbB 17s ease-in-out infinite alternate;
+}
+@keyframes orbA{ to{ transform:translate(140px,90px) scale(1.2); } }
+@keyframes orbB{ to{ transform:translate(-120px,-80px) scale(1.15); } }
+
+#authPage, #resetPage{
+  max-width:420px !important; margin:6vh auto 20px !important; padding:34px 28px 24px !important;
+  background:rgba(255,255,255,.06) !important; backdrop-filter:blur(22px) !important; -webkit-backdrop-filter:blur(22px) !important;
+  border:1px solid rgba(255,255,255,.14) !important; border-radius:28px !important;
+  box-shadow:0 25px 60px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.12) !important;
+  animation:cardIn .7s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes cardIn{ from{ opacity:0; transform:translateY(24px) scale(.97); } to{ opacity:1; transform:none; } }
+
+.auth-hero{ text-align:center; margin-bottom:22px; }
+.auth-logo{
+  width:78px; height:78px; margin:0 auto 14px; display:flex; align-items:center; justify-content:center;
+  font-size:28px; font-weight:800; letter-spacing:2px; color:#fff;
+  background:linear-gradient(135deg,#7c3aed,#2563eb); border:2.5px solid rgba(255,255,255,.85); border-radius:16px;
+  box-shadow:0 0 0 6px rgba(124,58,237,.18), 0 10px 35px rgba(124,58,237,.5);
+  animation:floaty 4s ease-in-out infinite;
+}
+@keyframes floaty{ 50%{ transform:translateY(-7px); } }
+.auth-brand{ font-size:34px; font-weight:800; letter-spacing:3px; line-height:1.1; }
+.auth-brand .b1{ background:linear-gradient(90deg,#fff,#c4b5fd 60%,#7dd3fc); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.auth-brand .b2{ color:#ef4444; text-shadow:0 0 18px rgba(239,68,68,.7); }
+.auth-tag{ margin-top:8px; font-size:11.5px; letter-spacing:.8px; color:#94a3b8; text-transform:uppercase; }
+
+#authPage .auth-tabs{ background:rgba(255,255,255,.07); border-radius:14px; padding:5px; gap:4px; margin:0 0 14px; }
+#authPage .auth-tabs button{ border-radius:10px !important; background:transparent; color:#94a3b8; padding:10px; font-family:inherit; font-size:14px; }
+#authPage .auth-tabs button.active{ background:linear-gradient(135deg,#7c3aed,#2563eb); color:#fff; box-shadow:0 6px 18px rgba(124,58,237,.45); }
+
+#authPage input, #resetPage input{
+  background:rgba(255,255,255,.07) !important; color:#fff !important; border:1px solid rgba(255,255,255,.16) !important;
+  border-radius:14px !important; padding:14px 16px !important; margin:7px 0 !important; font-family:inherit; transition:.2s;
+}
+#authPage input::placeholder, #resetPage input::placeholder{ color:#8793aa; }
+#authPage input:focus, #resetPage input:focus{ border-color:#a78bfa !important; box-shadow:0 0 0 3px rgba(167,139,250,.25); background:rgba(255,255,255,.1) !important; }
+#authPage button.btn-main, #resetPage button.btn-main{
+  border-radius:14px !important; padding:15px !important; margin-top:14px; font-family:inherit; font-size:16px; letter-spacing:.5px;
+  box-shadow:0 10px 28px rgba(245,158,11,.4); transition:transform .15s, box-shadow .15s;
+}
+#resetPage button.btn-main{ box-shadow:0 10px 28px rgba(124,58,237,.45); }
+#authPage button.btn-main:hover, #resetPage button.btn-main:hover{ transform:translateY(-2px); }
+#authPage button.btn-main:active{ transform:scale(.98); }
+#authPage #forgotLink a{ color:#a5b4fc !important; text-decoration:none !important; font-size:13px; }
+#authPage #forgotLink a:hover{ color:#fff !important; text-decoration:underline !important; }
+.auth-foot{ text-align:center; margin-top:18px; font-size:11px; color:#64748b; }
+#resetPage .brand-title{ color:#fff; }
+
+/* ---------- DASHBOARD ---------- */
+body:has(#dashPage:not(.hidden)) .container{ max-width:1240px; }
+#dashPage .header{
+  background:linear-gradient(120deg,#0b1226 0%,#1e3a8a 55%,#7c3aed 100%); border:none !important;
+  margin:-25px -25px 22px; padding:16px 22px; box-shadow:0 8px 24px rgba(30,58,138,.35);
+}
+#dashPage .header h3, #dashPage .header small{ color:#fff !important; }
+#dashPage .header h3{ font-weight:700; letter-spacing:.3px; }
+#dashPage .header .badge{ background:rgba(255,255,255,.16); border-color:rgba(255,255,255,.3); color:#fff; }
+#dashPage .header .profile-avatar{ border-color:#facc15; box-shadow:0 0 0 3px rgba(250,204,21,.25); }
+#dashPage .header > button{ border-radius:10px !important; box-shadow:0 6px 16px rgba(220,38,38,.4); }
+#dashPage .hamburger-btn{ background:rgba(255,255,255,.14); border-color:rgba(255,255,255,.3); color:#fff; border-radius:10px !important; }
+
+#dashPage .sidebar{ border-radius:18px !important; box-shadow:0 10px 30px rgba(15,23,42,.12); border:1px solid #e2e8f0; }
+#dashPage .sidebar button{ border-radius:11px !important; font-family:inherit; transition:transform .15s, box-shadow .15s, background .15s; }
+#dashPage .sidebar button:hover{ transform:translateX(4px); box-shadow:0 4px 12px rgba(15,23,42,.1); }
+#dashPage .sidebar button.active{ box-shadow:0 8px 20px rgba(124,58,237,.4); transform:none; }
+
+#dashPage .stat-box{ border-radius:14px !important; box-shadow:0 6px 18px rgba(15,23,42,.07); }
+#dashPage button.btn-main, #dashPage .btn-att, #dashPage button.btn-pdf, #dashPage button.btn-csv{ border-radius:12px !important; }
+#dashPage .tabs button{ border-radius:10px !important; }
+#dashPage .msg, #dashPage .video-card, #dashPage .ct-card{ border-radius:12px !important; }
+#dashPage input, #dashPage textarea, #dashPage select{ border-radius:10px !important; }
+#dashPage th:first-child{ border-top-left-radius:10px; } #dashPage th:last-child{ border-top-right-radius:10px; }
+#dashPage [style*="border-radius"]:not([style*="50%"]){ border-radius:12px !important; }
+
+/* Mobile: hamburger hata kar saare buttons seedhe dikhao */
+@media (max-width:760px){
+  .hamburger-btn, #dashPage .hamburger-btn{ display:none !important; }
+  #sidebarOverlay, #sidebarOverlay.open{ display:none !important; }
+  .dash-layout{ display:block; }
+  #dashPage .sidebar{
+    position:static !important; transform:none !important; width:100% !important; height:auto !important;
+    flex-direction:row; flex-wrap:wrap; gap:6px; padding:8px; margin-bottom:16px; overflow:visible;
+  }
+  #dashPage .sidebar button{ width:calc(50% - 3px); padding:10px 8px; font-size:12.5px; }
+  #dashPage .sidebar button:hover{ transform:none; }
+  #dashPage .header{ margin:-25px -25px 18px; padding:14px 16px; }
+  #authPage, #resetPage{ margin-top:4vh !important; padding:28px 20px 20px !important; }
+}
+
+body.dark #dashPage{ background:#0f172a; color:#e2e8f0; }
+body.dark #dashPage h3, body.dark #dashPage h4, body.dark #dashPage h5, body.dark #dashPage label{ color:#e2e8f0; }
+body.dark #dashPage .stat-box, body.dark #dashPage .sidebar, body.dark .ann-card{ background:#1e293b !important; color:#e2e8f0; }
+body.dark #dashPage .stat-box strong{ color:#fff; }
+body.dark #dashPage input, body.dark #dashPage textarea, body.dark #dashPage select{ background:#0f172a; color:#e2e8f0; border-color:#334155; }
+body.dark #dashPage .sidebar button{ color:#e2e8f0; }
+body.dark #dashPage tbody tr:nth-child(even){ background:#1e293b; }
+body.dark #dashPage td{ border-color:#334155; }
+.ann-card{ background:#fff; border:1px solid #d0d5dd; border-left:4px solid #f59e0b; padding:14px; margin-bottom:12px; }
+.bar{ display:flex; align-items:center; gap:8px; margin:5px 0; font-size:13px; } .bar i{ display:block; height:16px; background:linear-gradient(135deg,#7c3aed,#2563eb); }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- AUTH PAGE -->
+  <div id="authPage" class="card auth-card" style="background:transparent; box-shadow:none; border:none; backdrop-filter:none;">
+    <div class="auth-hero">
+      <div class="auth-logo">VR</div>
+      <div class="auth-brand"><span class="b1">VIK4NT</span><span class="b2">.INC</span></div>
+    </div>
+
+    <div class="tabs auth-tabs">
+      <button id="tLogin" class="active" onclick="setAuth('login')">Login</button>
+      <button id="tSignup" onclick="setAuth('signup')">Sign Up</button>
+    </div>
+
+    <div id="sFields" class="hidden">
+      <input id="fName" type="text" placeholder="Full Name" style="background:#fff; color:#111827; border:1px solid #e2e8f0;">
+      <input id="fPhone" type="tel" placeholder="Phone Number" style="background:#fff; color:#111827; border:1px solid #e2e8f0;">
+    </div>
+    <input id="fEmail" type="email" placeholder="Email Address" style="background:#fff; color:#111827; border:1px solid #e2e8f0;">
+    <input id="fPass" type="password" placeholder="Password" style="background:#fff; color:#111827; border:1px solid #e2e8f0;">
+
+    <button id="fBtn" class="btn-main" onclick="submitAuth()" style="background:linear-gradient(135deg,#facc15,#f59e0b); color:#1e293b;">Login</button>
+
+    <div id="forgotLink" style="text-align:center; margin-top:12px;">
+      <a href="#" onclick="forgotPassword(); return false;" style="color:#fff; text-decoration:underline; font-size:13px;">Forgot Password?</a>
+    </div>
+    <div id="fMsg" class="msg hidden"></div>
+    <div class="auth-foot">🔒 Secure login &bull; Powered by VIK4NT.INC</div>
+  </div>
+
+  <!-- RESET PASSWORD PAGE -->
+  <div id="resetPage" class="card auth-card hidden">
+    <div class="brand-title">🔑 Naya Password</div>
+    <div class="brand-subtitle">Apna naya password set karein</div>
+    <input id="rPass" type="password" placeholder="Naya Password (min 6)">
+    <input id="rPass2" type="password" placeholder="Password dobara likhein">
+    <button id="rBtn" class="btn-main" onclick="saveNewPassword()">Password Save Karein</button>
+    <div id="rMsg" class="msg hidden"></div>
+  </div>
+
+  <!-- DASHBOARD PAGE -->
+  <div id="dashPage" class="card hidden">
+    <div class="header">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <button class="hamburger-btn" onclick="toggleSidebar()">☰</button>
+        <img id="headerAvatar" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Crect width='90' height='90' fill='%23334155'/%3E%3Ccircle cx='45' cy='35' r='16' fill='%2394a3b8'/%3E%3Cellipse cx='45' cy='78' rx='28' ry='22' fill='%2394a3b8'/%3E%3C/svg%3E" class="profile-avatar" style="width:45px; height:45px; margin-bottom:0;" alt="Avatar">
+        <div>
+          <h3 id="wMsg" style="font-size:20px;">👋 Welcome</h3>
+          <small id="uBadge" class="badge badge-blue">USER</small>
+        </div>
+      </div>
+      <button onclick="logout()" style="background:#dc2626; color:#fff; border:none; padding:8px 14px; border-radius:8px; cursor:pointer; font-weight:bold;">Logout</button>
+    </div>
+
+    <div id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    <div class="dash-layout">
+      <div class="sidebar" id="sideNav">
+        <button id="nbDash" class="nav-btn active" onclick="showTab('dash')">🏠 Attendance</button>
+        <button id="nbLeave" class="nav-btn" onclick="showTab('leave')">📅 Leave Request</button>
+        <button id="nbLearn" class="nav-btn" onclick="showTab('learn')">📚 Training</button>
+        <button id="nbAdmin" class="nav-btn hidden" onclick="showTab('admin')">📊 All Attendance</button>
+        <button id="nbAdminLeave" class="nav-btn hidden" onclick="showTab('adminleave')">📝 Leave Approvals</button>
+        <button id="nbAdminUsers" class="nav-btn hidden" onclick="showTab('adminusers')">👥 User Management</button>
+        <button id="nbChat" class="nav-btn" onclick="showTab('chat')">💬 Community</button>
+        <button id="nbProf" class="nav-btn" onclick="showTab('prof')">👤 Profile</button>
+        <button id="nbVault" class="nav-btn hidden" onclick="showTab('vault')">🔐 Vault</button>
+        <button id="nbContact" class="nav-btn hidden" onclick="showTab('contact')">🎧 Emp Support</button>
+        <button id="nbInbox" class="nav-btn hidden" onclick="showTab('inbox')">📥 Support Inbox</button>
+        <button id="nbShare" class="nav-btn hidden" onclick="showTab('share')">🔑 Send ID/Password</button>
+        <button id="nbAnn" class="nav-btn" onclick="showTab('ann')">📢 Announcements <span id="bgAnn" class="badge badge-red hidden"></span></button>
+        <button id="nbTask" class="nav-btn" onclick="showTab('task')">✅ Tasks <span id="bgTask" class="badge badge-red hidden"></span></button>
+        <button id="nbHol" class="nav-btn" onclick="showTab('hol')">🎉 Holidays</button>
+        <button id="nbStats" class="nav-btn hidden" onclick="showTab('stats')">📈 Dashboard Stats</button>
+        <button id="nbAudit" class="nav-btn hidden" onclick="showTab('audit')">🧾 Audit Log</button>
+        <button class="nav-btn" onclick="toggleDark()">🌙 Dark Mode</button>
+      </div>
+      <div class="dash-main">
+
+    <!-- TAB 1: ATTENDANCE -->
+    <div id="tabDash">
+      <div class="stats-grid">
+        <div class="stat-box"><small>Today Status</small><strong id="uStatus">Not Marked</strong></div>
+        <div class="stat-box"><small>Check In</small><strong id="uCheckIn">--</strong></div>
+        <div class="stat-box"><small>Check Out</small><strong id="uCheckOut">--</strong></div>
+        <div class="stat-box"><small>Hours Worked</small><strong id="uHours">--</strong></div>
+      </div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button id="btnCheckIn" class="btn-att checkin" onclick="doAtt('CHECKED_IN')">🟢 Check In</button>
+        <button id="btnCheckOut" class="btn-att checkout" onclick="doAtt('COMPLETED')">🔴 Check Out</button>
+      </div>
+
+      <h4 style="margin-top:20px; color:#a78bfa;">📋 Attendance History</h4>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Date</th><th>Check In</th><th>Check Out</th><th>Hours</th><th>Status</th><th>Map Location</th></tr></thead>
+          <tbody id="attRows"><tr><td colspan="6" style="text-align:center;">No records</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 2: LEAVE REQUEST -->
+    <div id="tabLeave" class="hidden">
+      <h4 style="color:#a78bfa; margin-bottom:15px;">📅 Leave Management</h4>
+      <div style="background:rgba(15,23,42,0.9); padding:15px; border-radius:12px; border:1px solid var(--border); margin-bottom:20px; max-width:500px;">
+        <h5 style="color:#38bdf8; margin-bottom:10px;">Apply for Leave</h5>
+        <input id="lStart" type="date">
+        <input id="lEnd" type="date">
+        <textarea id="lReason" placeholder="Reason for leave" rows="2"></textarea>
+        <button class="btn-main" onclick="applyLeave()">Submit Leave Request</button>
+      </div>
+
+      <div id="leaveBal" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; max-width:500px;"></div>
+
+      <h5 style="color:#38bdf8; margin-top:15px;">📋 My Leave Applications</h5>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>From</th><th>To</th><th>Reason</th><th>Status</th></tr></thead>
+          <tbody id="myLeaveRows"><tr><td colspan="4" style="text-align:center;">No leave applications</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 3: LEARNING -->
+    <div id="tabLearn" class="hidden">
+      <h4 style="color:#a78bfa; margin-bottom:15px;">📚 Training Videos</h4>
+      <div id="adminVideoBox" class="hidden" style="background:rgba(15,23,42,0.9); padding:15px; border-radius:12px; border:1px solid var(--border); margin-bottom:20px;">
+        <h5 style="color:#38bdf8; margin-bottom:8px;">➕ Add Video (Admin Only)</h5>
+        <input id="vTitle" type="text" placeholder="Video Title">
+        <input id="vUrl" type="text" placeholder="YouTube Link (e.g. https://youtu.be/...)">
+        <div style="text-align:center; color:#94a3b8; font-size:12px; margin:10px 0;">— OR upload from device —</div>
+        <input id="vFile" type="file" accept="video/*">
+        <div id="vUploadMsg" style="font-size:12px; color:#94a3b8; margin-top:4px;"></div>
+        <button id="vSaveBtn" class="btn-main" onclick="addVideo()">Save Video</button>
+      </div>
+      <div id="vList">Loading videos...</div>
+    </div>
+
+    <!-- TAB 4a: ADMIN - ALL ATTENDANCE -->
+    <div id="tabAdmin" class="hidden">
+      <h4 style="color:#a78bfa; margin-bottom:15px;">📊 All Attendance Logs</h4>
+
+      <div class="stats-grid">
+        <div class="stat-box"><small>Total Users</small><strong id="aTotalU">0</strong></div>
+        <div class="stat-box"><small>Today Attendance</small><strong id="aTodayAtt">0</strong></div>
+        <div class="stat-box"><small>Pending Leaves</small><strong id="aPendingL">0</strong></div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+        <h5 style="color:#38bdf8; margin-top:10px;">📋 All Attendance Logs</h5>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button class="btn-pdf" onclick="exportAttendancePDF()">📄 Download PDF</button>
+          <button class="btn-csv" onclick="exportAttendanceCSV()">📥 Download CSV</button>
+        </div>
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Date</th><th>Employee</th><th>In</th><th>Out</th><th>Hours</th><th>Status</th><th>Map Location</th></tr></thead>
+          <tbody id="aAttTable"><tr><td colspan="7" style="text-align:center;">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 4b: ADMIN - LEAVE APPROVALS -->
+    <div id="tabAdminLeave" class="hidden">
+      <h4 style="color:#a78bfa; margin-bottom:15px;">📝 Leave Applications Management</h4>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Employee</th><th>Dates</th><th>Reason</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody id="aLeaveTable"><tr><td colspan="5" style="text-align:center;">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 4c: ADMIN - USER MANAGEMENT -->
+    <div id="tabAdminUsers" class="hidden">
+      <h4 style="color:#a78bfa; margin-bottom:15px;">👥 User Management</h4>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Action</th></tr></thead>
+          <tbody id="aUsersTable"><tr><td colspan="5" style="text-align:center;">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: CONTACT ADMIN (user) -->
+    <div id="tabContact" class="hidden">
+      <h4 style="color:#a78bfa; margin-bottom:10px;">🎧 Emp Support</h4>
+      <select id="ctCategory">
+        <option>Salary</option><option>Attendance</option><option>Leave</option>
+        <option>Technical</option><option selected>Other</option>
+      </select>
+      <input id="ctSubject" type="text" maxlength="100" placeholder="Subject (optional)">
+      <textarea id="ctBody" rows="4" maxlength="1000" placeholder="Apni problem likhein..."></textarea>
+      <button class="btn-main" onclick="sendContact()">Submit Request</button>
+      <h4 style="color:#a78bfa; margin-top:20px;">Meri Requests</h4>
+      <div id="ctList"></div>
+    </div>
+
+    <!-- TAB: SEND ID/PASSWORD TO ADMIN (user, write-only) -->
+    <div id="tabShare" class="hidden">
+      <h4 style="color:#a78bfa; margin-bottom:5px;">🔑 Send ID/Password to Admin</h4>
+      <small>Encrypt hokar jaata hai. Sirf Admin dekh sakta hai, aap ya koi aur user nahi.</small>
+      <input id="shLabel" type="text" placeholder="Kis cheez ka? (e.g. Instagram, Hosting)">
+      <input id="shUser" type="text" placeholder="ID / Username / Email" autocomplete="off">
+      <input id="shPass" type="password" placeholder="Password" autocomplete="new-password">
+      <input id="shNote" type="text" placeholder="Note (optional)">
+      <button class="btn-main" onclick="shareSubmit()">🔒 Send to Admin</button>
+    </div>
+
+    <!-- TAB: ADMIN INBOX -->
+    <div id="tabInbox" class="hidden">
+      <h4 style="color:#a78bfa; margin-bottom:10px;">📥 Support Inbox</h4>
+      <div id="inList"></div>
+    </div>
+
+    <!-- TAB: ADMIN VAULT -->
+    <div id="tabVault" class="hidden">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <h4 style="color:#a78bfa;">🔐 Admin Vault</h4>
+        <button class="nav-btn" onclick="vLock()">🔒 Lock</button>
+      </div>
+      <small>Sirf Admin dekh sakta hai. Data browser me encrypt hokar save hota hai.</small>
+      <input id="vLabel" type="text" placeholder="Kis cheez ka? (e.g. Instagram, Hosting)">
+      <input id="vUser" type="text" placeholder="ID / Username / Email" autocomplete="off">
+      <input id="vInPass" type="text" placeholder="Password" autocomplete="off">
+      <input id="vNote" type="text" placeholder="Note (optional)">
+      <button class="btn-main" onclick="vSave()">💾 Save</button>
+      <div id="vDetail" class="hidden" style="margin-top:15px; padding:12px; border:1px solid #d0d5dd; background:#fff;"></div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Label</th><th>Date</th><th>Action</th></tr></thead>
+          <tbody id="vRows"><tr><td colspan="3" style="text-align:center;">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: COMMUNITY -->
+    <div id="tabChat" class="hidden">
+      <h4 style="color:#a78bfa; margin-bottom:15px;">💬 Community</h4>
+      <div class="comm">
+        <div class="c-list" id="cUsers"><div style="padding:12px;">Loading...</div></div>
+        <div class="c-pane" id="cPane"><div style="padding:20px; color:#64748b;">Kisi user par tap karein, phir message bhejein.</div></div>
+      </div>
+    </div>
+
+
+    <!-- NEW TABS -->
+    <div id="tabAnn" class="hidden">
+      <h4 style="margin-bottom:12px;">📢 Announcements</h4>
+      <div id="annForm" class="hidden"><input id="annTitle" placeholder="Title"><textarea id="annBody" rows="3" placeholder="Message"></textarea><button class="btn-main" onclick="annPost()">Post</button></div>
+      <div id="annList"></div>
+    </div>
+    <div id="tabTask" class="hidden">
+      <h4 style="margin-bottom:12px;">✅ Tasks</h4>
+      <div id="taskForm" class="hidden"><input id="tTitle" placeholder="Task title"><textarea id="tDetails" rows="2" placeholder="Details"></textarea><select id="tUser"></select><input id="tDue" type="date"><button class="btn-main" onclick="taskAdd()">Assign Task</button></div>
+      <table><thead><tr><th>Task</th><th>For</th><th>Due</th><th>Status</th></tr></thead><tbody id="taskRows"></tbody></table>
+    </div>
+    <div id="tabHol" class="hidden">
+      <h4 style="margin-bottom:12px;">🎉 Holiday Calendar</h4>
+      <div id="holForm" class="hidden"><input id="hName" placeholder="Holiday name"><input id="hDate" type="date"><button class="btn-main" onclick="holAdd()">Add Holiday</button></div>
+      <table><thead><tr><th>Date</th><th>Holiday</th><th></th></tr></thead><tbody id="holRows"></tbody></table>
+    </div>
+    <div id="tabStats" class="hidden">
+      <h4 style="margin-bottom:12px;">📈 Today's Overview</h4>
+      <div class="stats-grid"><div class="stat-box"><small>Total Staff</small><strong id="sTot">--</strong></div><div class="stat-box"><small>Present</small><strong id="sPre">--</strong></div><div class="stat-box"><small>On Leave</small><strong id="sLeave">--</strong></div><div class="stat-box"><small>Absent</small><strong id="sAbs">--</strong></div><div class="stat-box"><small>Open Tasks</small><strong id="sTask">--</strong></div></div>
+      <h5 style="margin:10px 0;">Last 7 days attendance</h5><div id="sChart"></div>
+    </div>
+    <div id="tabAudit" class="hidden">
+      <h4 style="margin-bottom:12px;">🧾 Audit Log</h4>
+      <table><thead><tr><th>Time</th><th>Who</th><th>Action</th><th>Detail</th></tr></thead><tbody id="auditRows"></tbody></table>
+    </div>
+
+    <!-- TAB 5: PROFILE -->
+    <div id="tabProf" class="hidden">
+      <h4 style="color:#a78bfa; margin-bottom:15px;">👤 My Profile</h4>
+      <div style="max-width:450px;">
+        <div style="text-align:center; margin-bottom:15px;">
+          <img id="pAvatarImg" style="cursor:pointer;" onclick="$('pAvatarFile').click()" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Crect width='90' height='90' fill='%23334155'/%3E%3Ccircle cx='45' cy='35' r='16' fill='%2394a3b8'/%3E%3Cellipse cx='45' cy='78' rx='28' ry='22' fill='%2394a3b8'/%3E%3C/svg%3E" class="profile-avatar" alt="Profile Photo">
+          <div>
+            <label style="display:inline-block; padding:8px 16px; background:#7c3aed; color:#fff; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">
+              📷 Change Photo <input type="file" id="pAvatarFile" accept="image/*" style="display:none;" onchange="uploadAvatar(this)">
+            </label>
+          </div>
+        </div>
+
+        <input id="pName" type="text" placeholder="Full Name">
+        <input id="pEmail" type="email" readonly style="opacity:0.6;" title="Email cannot be changed">
+        <input id="pPhone" type="tel" placeholder="Phone Number">
+        <textarea id="pBio" rows="3" maxlength="200" placeholder="Bio (sirf admin ko dikhega)"></textarea>
+        
+        <h5 style="color:#38bdf8; margin:15px 0 5px 0; font-size:14px;">🔗 Social Media Profiles</h5>
+        <input id="pInstagram" type="text" placeholder="Instagram Profile URL">
+        <input id="pTwitter" type="text" placeholder="Twitter / X Profile URL">
+        <input id="pLinkedIn" type="text" placeholder="LinkedIn Profile URL">
+        <input id="pGithub" type="text" placeholder="GitHub Profile URL">
+
+        <input id="pPass" type="password" placeholder="New Password (optional)">
+        <button class="btn-main" onclick="updateProfile()">Save Changes</button>
+      </div>
+      <div id="pMsg" class="msg hidden"></div>
+    </div>
+
+      </div>
+    </div>
+
+    <div id="dMsg" class="msg hidden"></div>
+  </div>
+
+</div>
+
+<script>
+const S_URL = "https://jdetqupmtgrrwzrufhsg.supabase.co";
+const S_KEY = "sb_publishable_QVtX3-gxQnXhsZC5tIwV8w_XXOGmmNI";
+const BUCKET = "Vikram";
+let db = null, mode = "login", user = null, recovering = false;
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const todayStr = () => new Date().toLocaleDateString('en-CA');
+const nowTime = () => new Date().toLocaleTimeString('en-GB');
+function toSecs(t) {
+  const m = String(t || '').trim().match(/^(\d{1,2}):(\d{2}):?(\d{2})?\s*([ap]m)?$/i);
+  if (!m) return NaN;
+  let h = +m[1]; const mi = +m[2], s = +(m[3] || 0), ap = (m[4] || '').toLowerCase();
+  if (ap === 'pm' && h < 12) h += 12;
+  if (ap === 'am' && h === 12) h = 0;
+  return h * 3600 + mi * 60 + s;
+}
+
+// Load Supabase library (tries multiple CDNs), then create client
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    const el = document.createElement('script');
+    el.src = src; el.onload = res; el.onerror = () => rej(new Error("load failed: " + src));
+    document.head.appendChild(el);
+  });
+}
+async function ensureDb() {
+  if (db) return db;
+  if (typeof supabase === 'undefined' || !supabase.createClient) {
+    const cdns = [
+      "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+      "https://unpkg.com/@supabase/supabase-js@2",
+      "https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.39.7/supabase.min.js"
+    ];
+    for (const u of cdns) {
+      try { await loadScript(u); if (window.supabase && window.supabase.createClient) break; } catch (e) { console.warn(e.message); }
+    }
+  }
+  if (typeof supabase === 'undefined' || !supabase.createClient) {
+    throw new Error("Supabase library load nahi ho payi. Internet ya ad-blocker check karein.");
+  }
+  db = supabase.createClient(S_URL, S_KEY, {
+    auth: {
+      persistSession: true, autoRefreshToken: true, detectSessionInUrl: true,
+      lock: async (name, acquireTimeout, fn) => { return await fn(); }
+    }
+  });
+  db.auth.onAuthStateChange((event) => {
+    if (event === 'PASSWORD_RECOVERY') { recovering = true; showReset(); }
+  });
+  return db;
+}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+
+window.onload = async function () {
+  try {
+    await ensureDb();
+    const { data } = await db.auth.getSession();
+    if (/type=recovery/.test(location.hash)) { recovering = true; showReset(); return; }
+    if (!recovering && data && data.session) await loadUser(data.session.user);
+  } catch (e) {
+    console.error(e);
+    showBox("fMsg", "❌ Connection Error: " + e.message, true);
+  }
+};
+
+async function forgotPassword() {
+  const email = $("fEmail").value.trim();
+  if (!email) { showBox("fMsg", "⚠️ Upar Email Address bharein, phir Forgot Password dabayein.", true); return; }
+  try {
+    await ensureDb();
+    const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+    if (error) { showBox("fMsg", "❌ " + error.message, true); return; }
+    showBox("fMsg", "📧 Reset link email par bhej diya. Inbox aur Spam dono check karein.", false);
+  } catch (e) { showBox("fMsg", "❌ " + e.message, true); }
+}
+function showReset() {
+  $("authPage").className = "card auth-card hidden";
+  $("dashPage").className = "card hidden";
+  $("resetPage").className = "card auth-card";
+}
+async function saveNewPassword() {
+  const p1 = $("rPass").value, p2 = $("rPass2").value;
+  if (p1.length < 6) { showBox("rMsg", "⚠️ Password kam se kam 6 akshar ka ho.", true); return; }
+  if (p1 !== p2) { showBox("rMsg", "⚠️ Dono password same nahi hain.", true); return; }
+  try {
+    const { error } = await db.auth.updateUser({ password: p1 });
+    if (error) { showBox("rMsg", "❌ " + error.message, true); return; }
+    showBox("rMsg", "✅ Password badal gaya! Login page par ja rahe hain...", false);
+    await db.auth.signOut();
+    setTimeout(() => { location.href = location.origin + location.pathname; }, 1500);
+  } catch (e) { showBox("rMsg", "❌ " + e.message, true); }
+}
+
+function setAuth(m) {
+  mode = m; hideBox("fMsg");
+  $("tSignup").className = m === 'signup' ? "active" : "";
+  $("tLogin").className = m === 'login' ? "active" : "";
+  $("sFields").className = m === 'signup' ? "" : "hidden";
+  $("fBtn").textContent = m === 'signup' ? "Create Account" : "Login";
+}
+function showBox(id, txt, err) {
+  const el = $(id); if (!el) return;
+  el.textContent = txt; el.className = "msg " + (err ? "err" : "succ");
+}
+function hideBox(id) { const el = $(id); if (el) el.classList.add("hidden"); }
+
+async function loadUser(authUser) {
+  const { data, error } = await db.from('users')
+    .select('user_id, full_name, email, phone, role, status, avatar_url, instagram, twitter, linkedin, github')
+    .eq('user_id', authUser.id).maybeSingle();
+  if (error || !data) {
+    showBox("fMsg", "❌ Profile nahi mili" + (error ? ": " + error.message : ". Dobara Sign Up karein."), true);
+    await db.auth.signOut(); return false;
+  }
+  user = data; openDash(); return true;
+}
+
+async function submitAuth() {
+  const email = $("fEmail").value.trim(), pass = $("fPass").value;
+  if (!email || !pass) { showBox("fMsg", "⚠️ Email aur Password bharein!", true); return; }
+  const btn = $("fBtn"), label = mode === 'signup' ? "Create Account" : "Login";
+  btn.disabled = true; btn.textContent = "Connecting...";
+  try {
+    await ensureDb();
+    if (mode === 'signup') {
+      const name = $("fName").value.trim(), phone = $("fPhone").value.trim();
+      if (!name) { showBox("fMsg", "⚠️ Naam bharein!", true); return; }
+      if (pass.length < 6) { showBox("fMsg", "⚠️ Password kam se kam 6 akshar ka ho.", true); return; }
+      const { data, error } = await db.auth.signUp({ email, password: pass });
+      if (error) { showBox("fMsg", "❌ Signup Error: " + error.message, true); return; }
+      if (!data.session) { showBox("fMsg", "📧 Email confirm karke phir Login karein.", false); return; }
+      const { error: e2 } = await db.from('users').insert([{
+        user_id: data.user.id, full_name: name, email, phone, role: 'USER' }]);
+      if (e2) { showBox("fMsg", "❌ Profile Error: " + e2.message, true); return; }
+      await loadUser(data.user);
+    } else {
+      const { data, error } = await db.auth.signInWithPassword({ email, password: pass });
+      if (error) { showBox("fMsg", "❌ " + error.message, true); return; }
+      await loadUser(data.user);
+    }
+  } catch (err) { showBox("fMsg", "Error: " + err.message, true); }
+  finally { btn.disabled = false; btn.textContent = label; }
+}
+
+function openDash() {
+  $("authPage").className = "card auth-card hidden";
+  $("dashPage").className = "card";
+  document.body.classList.add("light-mode");
+  $("wMsg").textContent = "👋 Welcome, " + (user.full_name || "User");
+  $("uBadge").textContent = user.role || "USER";
+  if(user.avatar_url) {
+    $("headerAvatar").src = user.avatar_url;
+  }
+  const admin = user.role === 'ADMIN';
+  $("nbAdmin").classList.toggle("hidden", !admin);
+  $("nbAdminLeave").classList.toggle("hidden", !admin);
+  $("nbAdminUsers").classList.toggle("hidden", !admin);
+  $("nbVault").classList.toggle("hidden", !admin);
+  $("nbInbox").classList.toggle("hidden", !admin);
+  $("nbContact").classList.toggle("hidden", admin);
+  $("nbShare").classList.toggle("hidden", admin);
+  $("adminVideoBox").classList.toggle("hidden", !admin);
+  ['nbStats','nbAudit'].forEach(i => $(i).classList.toggle('hidden', !admin));
+  ['annForm','taskForm','holForm'].forEach(i => $(i).classList.toggle('hidden', !admin));
+  if (localStorage.getItem('vikDark') === '1') document.body.classList.add('dark');
+  startIdle(); refreshBadges();
+  showTab('dash');
+}
+
+function showTab(t) {
+  const map = { dash: 'Dash', leave: 'Leave', learn: 'Learn', admin: 'Admin', adminleave: 'AdminLeave', adminusers: 'AdminUsers', chat: 'Chat', prof: 'Prof', vault: 'Vault', contact: 'Contact', inbox: 'Inbox', share: 'Share', ann: 'Ann', task: 'Task', hol: 'Hol', stats: 'Stats', audit: 'Audit' };
+  const navMap = { dash: 'Dash', leave: 'Leave', learn: 'Learn', admin: 'Admin', adminleave: 'AdminLeave', adminusers: 'AdminUsers', chat: 'Chat', prof: 'Prof', vault: 'Vault', contact: 'Contact', inbox: 'Inbox', share: 'Share', ann: 'Ann', task: 'Task', hol: 'Hol', stats: 'Stats', audit: 'Audit' };
+  const adminKeys = ['admin', 'adminleave', 'adminusers', 'vault', 'inbox', 'stats', 'audit'];
+  for (const k in map) {
+    $("tab" + map[k]).classList.toggle("hidden", k !== t);
+    $("nb" + navMap[k]).className = "nav-btn" + (k === t ? " active" : "") + ((adminKeys.includes(k) && user.role !== 'ADMIN') || (['contact', 'share'].includes(k) && user.role === 'ADMIN') ? " hidden" : "");
+  }
+  hideBox("dMsg");
+  if (t !== 'chat') stopChat();
+  if (t !== 'vault') { vSecret = null; }
+  if (t === 'dash') loadAtt();
+  else if (t === 'leave') loadMyLeaves();
+  else if (t === 'learn') loadVideos();
+  else if (t === 'admin' || t === 'adminleave' || t === 'adminusers') loadAdminData();
+  else if (t === 'chat') loadCommunity();
+  else if (t === 'prof') loadProfile();
+  else if (t === 'vault') loadVault();
+  else if (t === 'contact') loadContact();
+  else if (t === 'inbox') loadInbox();
+  else if (t === 'ann') loadAnn();
+  else if (t === 'task') loadTasks();
+  else if (t === 'hol') loadHol();
+  else if (t === 'stats') loadStats();
+  else if (t === 'audit') loadAudit();
+  closeSidebar();
+}
+function toggleSidebar() {
+  $("sideNav").classList.toggle("open");
+  $("sidebarOverlay").classList.toggle("open");
+}
+function closeSidebar() {
+  $("sideNav").classList.remove("open");
+  $("sidebarOverlay").classList.remove("open");
+}
+
+// ===== ATTENDANCE =====
+function doAtt(st) {
+  $("btnCheckIn").disabled = true; $("btnCheckOut").disabled = true;
+  showBox("dMsg", "Saving Attendance...", false);
+  if ("geolocation" in navigator) {
+    navigator.geolocation.getCurrentPosition(
+      p => saveAtt(st, p.coords.latitude, p.coords.longitude),
+      () => saveAtt(st, null, null), { timeout: 2500 });
+  } else saveAtt(st, null, null);
+}
+
+async function saveAtt(st, lat, lon) {
+  const today = todayStr(), time = nowTime();
+  const loc = (lat && lon) ? { latitude: String(lat), longitude: String(lon),
+    location_url: `https://www.google.com/maps?q=${lat},${lon}` } : {};
+  try {
+    const { data: ex, error: fe } = await db.from('attendance').select('*')
+      .eq('user_id', user.user_id).eq('date', today).limit(1);
+    if (fe) throw fe;
+    const rec = ex && ex[0];
+    if (st === 'CHECKED_IN') {
+      if (rec) { showBox("dMsg", "⚠️ Aap aaj pehle hi Check In kar chuke hain!", true); }
+      else {
+        const { error } = await db.from('attendance').insert([{
+          user_id: user.user_id, user_name: user.full_name, date: today,
+          check_in: time, check_out: null, status: 'CHECKED_IN', ...loc }]);
+        if (error) throw error;
+        showBox("dMsg", "✅ Checked In!", false);
+      }
+    } else {
+      if (!rec) showBox("dMsg", "⚠️ Pehle Check In karein!", true);
+      else if (rec.check_out) showBox("dMsg", "⚠️ Aap aaj pehle hi Check Out kar chuke hain!", true);
+      else {
+        let hrs = "--";
+        const d = toSecs(time) - toSecs(rec.check_in);
+        if (!isNaN(d) && d > 0) hrs = (d / 3600).toFixed(2);
+        const { error } = await db.from('attendance')
+          .update({ check_out: time, status: 'COMPLETED', total_hours: hrs, ...loc })
+          .eq('user_id', user.user_id).eq('date', today);
+        if (error) throw error;
+        showBox("dMsg", "✅ Checked Out! Total: " + hrs + " hrs", false);
+      }
+    }
+  } catch (e) { showBox("dMsg", "Error: " + e.message, true); }
+  $("btnCheckIn").disabled = false; $("btnCheckOut").disabled = false;
+  loadAtt();
+}
+
+async function loadAtt() {
+  const { data, error } = await db.from('attendance').select('*')
+    .eq('user_id', user.user_id).order('created_at', { ascending: false });
+  if (error) { showBox("dMsg", "Error: " + error.message, true); return; }
+  const rows = data || [], t = rows.find(r => r.date === todayStr());
+  $("uStatus").textContent = t ? t.status : "Not Marked";
+  $("uCheckIn").textContent = (t && t.check_in) || "--";
+  $("uCheckOut").textContent = (t && t.check_out) || "--";
+  $("uHours").textContent = (t && t.total_hours) || "--";
+  $("attRows").innerHTML = rows.length ? rows.map(r => `<tr>
+    <td>${esc(r.date)}</td><td>${esc(r.check_in || '--')}</td><td>${esc(r.check_out || '--')}</td>
+    <td>${esc(r.total_hours || '--')}</td>
+    <td><span class="badge ${r.status === 'COMPLETED' ? 'badge-green' : 'badge-blue'}">${esc(r.status)}</span></td>
+    <td>${mapLink(r.location_url)}</td></tr>`).join('')
+    : '<tr><td colspan="6" style="text-align:center;">No records</td></tr>';
+}
+function mapLink(u) {
+  return u && /^https:\/\//.test(u) ? `<a href="${esc(u)}" target="_blank" rel="noopener" style="color:#38bdf8;text-decoration:none;">📍 Map</a>` : '--';
+}
+
+// ===== LEAVES =====
+const LEAVE_QUOTA = 12; // saal mein total chhuttiyan (yahan badal sakte ho)
+let myLeaves = [];
+function leaveDays(s, e) { return Math.round((new Date(e) - new Date(s)) / 86400000) + 1; }
+function leaveStats() {
+  const yr = new Date().getFullYear(), ys = yr + "-01-01", ye = yr + "-12-31";
+  let used = 0, pending = 0;
+  myLeaves.forEach(l => {
+    if (l.status === 'REJECTED') return;
+    const s = l.start_date < ys ? ys : l.start_date, e = l.end_date > ye ? ye : l.end_date;
+    if (e < s) return;
+    const d = leaveDays(s, e);
+    if (l.status === 'APPROVED') used += d; else pending += d;
+  });
+  return { used, pending, left: LEAVE_QUOTA - used - pending };
+}
+function renderLeaveBal() {
+  const b = leaveStats();
+  const card = (n, label, c) => `<div style="flex:1; min-width:90px; background:rgba(15,23,42,0.9); border:1px solid var(--border); border-radius:12px; padding:12px; text-align:center;">
+    <div style="font-size:22px; font-weight:700; color:${c};">${n}</div><div style="font-size:12px; opacity:.8;">${label}</div></div>`;
+  $("leaveBal").innerHTML = card(LEAVE_QUOTA, "Total (saal)", "#a78bfa") + card(b.used, "Approved", "#10b981")
+    + card(b.pending, "Pending", "#f59e0b") + card(Math.max(b.left, 0), "Bachi hui", b.left > 0 ? "#38bdf8" : "#ef4444");
+}
+async function applyLeave() {
+  const s = $("lStart").value, e = $("lEnd").value, r = $("lReason").value.trim();
+  if (!s || !e || !r) return alert("Sabhi fields bharein!");
+  if (e < s) return alert("End date, start date se pehle nahi ho sakti!");
+  const need = leaveDays(s, e), left = leaveStats().left;
+  if (need > left && !confirm("Is request mein " + need + " din hain, lekin sirf " + Math.max(left, 0) + " din bache hain. Phir bhi bhejna hai?")) return;
+  const { error } = await db.from('leave_requests').insert([{
+    user_id: user.user_id, user_name: user.full_name, start_date: s, end_date: e, reason: r, status: 'PENDING' }]);
+  if (error) return alert("Error: " + error.message);
+  alert("✅ Leave request submitted!");
+  $("lStart").value = ""; $("lEnd").value = ""; $("lReason").value = "";
+  loadMyLeaves();
+}
+const lBadge = s => `badge-${s === 'APPROVED' ? 'green' : s === 'REJECTED' ? 'red' : 'orange'}`;
+async function loadMyLeaves() {
+  const { data, error } = await db.from('leave_requests').select('*')
+    .eq('user_id', user.user_id).order('created_at', { ascending: false });
+  if (error) { showBox("dMsg", "Error: " + error.message, true); return; }
+  myLeaves = data || []; renderLeaveBal();
+  $("myLeaveRows").innerHTML = (data && data.length) ? data.map(l => `<tr>
+    <td>${esc(l.start_date)}</td><td>${esc(l.end_date)}</td><td>${esc(l.reason)}</td>
+    <td><span class="badge ${lBadge(l.status)}">${esc(l.status)}</span></td></tr>`).join('')
+    : '<tr><td colspan="4" style="text-align:center;">No leave applications found</td></tr>';
+}
+
+// ===== VIDEOS =====
+async function addVideo() {
+  const t = $("vTitle").value.trim(); let u = $("vUrl").value.trim();
+  const file = $("vFile").files[0], btn = $("vSaveBtn");
+  if (!t) return alert("Title zaroori hai!");
+  if (!u && !file) return alert("YouTube link daalein ya video file select karein!");
+  btn.disabled = true;
+  try {
+    if (file) {
+      btn.textContent = "Uploading..."; $("vUploadMsg").textContent = "Uploading video, please wait...";
+      const ext = file.name.split('.').pop();
+      const name = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error: ue } = await db.storage.from(BUCKET).upload(name, file);
+      if (ue) throw new Error("Upload: " + ue.message);
+      u = db.storage.from(BUCKET).getPublicUrl(name).data.publicUrl;
+    } else {
+      const m = u.match(/(?:youtu\.be\/|v=|embed\/)([\w-]{11})/);
+      if (m) u = "https://www.youtube.com/embed/" + m[1];
+    }
+    const { error } = await db.from('videos').insert([{ title: t, video_url: u }]);
+    if (error) throw error;
+    alert("✅ Video Saved!");
+    $("vTitle").value = ""; $("vUrl").value = ""; $("vFile").value = "";
+    loadVideos();
+  } catch (e) { alert("Error: " + e.message); }
+  $("vUploadMsg").textContent = ""; btn.disabled = false; btn.textContent = "Save Video";
+}
+async function loadVideos() {
+  const { data, error } = await db.from('videos').select('*').order('created_at', { ascending: false });
+  const box = $("vList");
+  if (error) { box.textContent = "Error: " + error.message; return; }
+  if (!data || !data.length) { box.innerHTML = "<p style='color:#aaa;'>No videos available.</p>"; return; }
+  box.innerHTML = data.map(v => {
+    const yt = (v.video_url || '').includes("youtube.com/embed");
+    const media = yt ? `<iframe src="${esc(v.video_url)}" allowfullscreen></iframe>`
+      : `<video src="${esc(v.video_url)}" controls style="width:100%;height:220px;border-radius:0;background:#000;"></video>`;
+    return `<div class="video-card">${media}<h5 style="margin-top:10px;color:#38bdf8;font-size:16px;">${esc(v.title)}</h5></div>`;
+  }).join('');
+}
+
+// ===== ADMIN =====
+let adminAtt = [];
+async function loadAdminData() {
+  const today = todayStr();
+  try {
+    const [uR, aR, lR] = await Promise.all([
+      db.from('users').select('user_id, full_name, email, phone, role, created_at').order('created_at', { ascending: false }),
+      db.from('attendance').select('*').order('created_at', { ascending: false }),
+      db.from('leave_requests').select('*').order('created_at', { ascending: false })
+    ]);
+    const err = uR.error || aR.error || lR.error;
+    if (err) { showBox("dMsg", "Admin Error: " + err.message, true); return; }
+    const users = uR.data || [], att = aR.data || [], leaves = lR.data || [];
+    adminAtt = att;
+    $("aTotalU").textContent = users.length;
+    $("aTodayAtt").textContent = att.filter(a => a.date === today).length;
+    $("aPendingL").textContent = leaves.filter(l => (l.status || 'PENDING') === 'PENDING').length;
+
+    $("aUsersTable").innerHTML = users.map(u => `<tr>
+      <td><b>${esc(u.full_name)}</b></td><td>${esc(u.email)}</td><td>${esc(u.phone || '--')}</td>
+      <td><span class="badge badge-blue">${esc(u.role)}</span></td>
+      <td>${u.user_id === user.user_id ? '--' : `<button class="btn-main" style="padding:4px 8px;font-size:11px;margin:0;"
+        onclick="setRole('${esc(u.user_id)}','${u.role === 'ADMIN' ? 'USER' : 'ADMIN'}')">${u.role === 'ADMIN' ? 'Make USER' : 'Make ADMIN'}</button>
+        <button class="btn-main" style="padding:4px 8px;font-size:11px;margin:4px 0 0 0;background:#ef4444;"
+        data-id="${esc(u.user_id)}" data-name="${esc(u.full_name)}" onclick="removeUser(this)">Remove</button>`}</td></tr>`).join('');
+
+    $("aAttTable").innerHTML = att.length ? att.map(a => `<tr>
+      <td>${esc(a.date)}</td><td><b>${esc(a.user_name)}</b></td><td>${esc(a.check_in || '--')}</td>
+      <td>${esc(a.check_out || '--')}</td><td>${esc(a.total_hours || '--')}</td>
+      <td><span class="badge badge-green">${esc(a.status)}</span></td><td>${mapLink(a.location_url)}</td></tr>`).join('')
+      : '<tr><td colspan="7" style="text-align:center;">No records</td></tr>';
+
+    $("aLeaveTable").innerHTML = leaves.length ? leaves.map(l => {
+      const st = l.status || 'PENDING';
+      const act = st === 'PENDING'
+        ? `<button onclick="updateLeaveStatus('${esc(l.leave_id)}','APPROVED')" style="background:#10b981;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">Approve</button>
+           <button onclick="updateLeaveStatus('${esc(l.leave_id)}','REJECTED')" style="background:#ef4444;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">Reject</button>`
+        : `<span class="badge ${lBadge(st)}">${esc(st)}</span>`;
+      return `<tr><td><b>${esc(l.user_name)}</b></td><td>${esc(l.start_date)} to ${esc(l.end_date)}</td>
+        <td>${esc(l.reason)}</td><td>${esc(st)}</td><td>${act}</td></tr>`;
+    }).join('') : '<tr><td colspan="5" style="text-align:center;">No applications</td></tr>';
+  } catch (e) { showBox("dMsg", "Admin Error: " + e.message, true); }
+}
+async function updateLeaveStatus(id, st) {
+  const { error } = await db.from('leave_requests').update({ status: st }).eq('leave_id', id);
+  if (error) showBox("dMsg", "❌ " + error.message, true);
+  loadAdminData();
+}
+async function removeUser(btn) {
+  audit('USER_REMOVE', btn.dataset.name || '');
+  const id = btn.dataset.id, name = btn.dataset.name || 'is user';
+  if (!confirm(name + " ko portal se hamesha ke liye hata dein?\nYeh wapas nahi ho sakta.")) return;
+  const { error } = await db.rpc('delete_user', { target: id });
+  if (error) alert("Error: " + error.message); else alert("User hata diya gaya");
+  loadAdminData();
+}
+async function setRole(id, role) {
+  audit('ROLE_CHANGE', id + ' → ' + role);
+  const { error } = await db.rpc('set_user_role', { target: id, new_role: role });
+  if (error) alert("Error: " + error.message); else alert("Role update ho gaya: " + role);
+  loadAdminData();
+}
+function exportAttendancePDF() {
+  const { jsPDF } = window.jspdf, doc = new jsPDF();
+  doc.text("VIK4NT.INC - Attendance Report", 14, 15);
+  doc.autoTable({
+    startY: 20, head: [['Date', 'Employee', 'In', 'Out', 'Hours', 'Status']],
+    body: adminAtt.map(a => [a.date, a.user_name, a.check_in || '--', a.check_out || '--', a.total_hours || '--', a.status])
+  });
+  doc.save("Attendance_Report.pdf");
+}
+
+function exportAttendanceCSV() {
+  if (!adminAtt || !adminAtt.length) {
+    alert("No attendance data available to export!");
+    return;
+  }
+  const headers = ["Date", "Employee", "In", "Out", "Hours", "Status"];
+  const rows = adminAtt.map(a => [
+    `"${a.date || ''}"`,
+    `"${(a.user_name || '').replace(/"/g, '""')}"`,
+    `"${a.check_in || '--'}"`,
+    `"${a.check_out || '--'}"`,
+    `"${a.total_hours || '--'}"`,
+    `"${a.status || ''}"`
+  ]);
+
+  let csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+  let encodedUri = encodeURI(csvContent);
+  let link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", "Attendance_Report.csv");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+// ===== COMMUNITY / CHAT =====
+const DEF_AV = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Crect width='90' height='90' fill='%23334155'/%3E%3Ccircle cx='45' cy='35' r='16' fill='%2394a3b8'/%3E%3Cellipse cx='45' cy='78' rx='28' ry='22' fill='%2394a3b8'/%3E%3C/svg%3E";
+let chatWith = null, chatTimer = null, commUsers = [], adminFull = {}, lastMsgKey = "";
+
+function stopChat() { clearInterval(chatTimer); chatTimer = null; }
+
+async function loadCommunity() {
+  // Sab users ko sirf naam + photo dikhta hai (public_profiles view se). Email/phone yahan aata hi nahi.
+  const { data, error } = await db.from('public_profiles').select('user_id, full_name, avatar_url').neq('user_id', user.user_id).order('full_name');
+  if (error) { showBox("dMsg", "Community Error: " + error.message, true); return; }
+  commUsers = data || [];
+  if (user.role === 'ADMIN') {
+    const r = await db.from('users').select('user_id, email, phone, bio, role, instagram, twitter, linkedin, github');
+    adminFull = {}; (r.data || []).forEach(u => adminFull[u.user_id] = u);
+  }
+  $("cUsers").innerHTML = commUsers.length ? commUsers.map(u =>
+    `<div class="c-user ${u.user_id === chatWith ? 'sel' : ''}" onclick="openChat('${esc(u.user_id)}')">
+       <img src="${esc(u.avatar_url || DEF_AV)}" onerror="this.onerror=null;this.src=DEF_AV"><b>${esc(u.full_name || 'User')}</b></div>`).join('')
+    : '<div style="padding:12px;">Abhi koi aur user nahi hai</div>';
+  if (chatWith) openChat(chatWith);
+}
+
+function openChat(id) {
+  const u = commUsers.find(x => x.user_id === id); if (!u) return;
+  chatWith = id; lastMsgKey = "";
+  document.querySelectorAll('.c-user').forEach(el => el.classList.toggle('sel', el.getAttribute('onclick').includes(id)));
+  const f = adminFull[id];
+  const adminBlock = user.role === 'ADMIN' && f ? `
+    <div class="c-info">📝 <b>Bio:</b> ${esc(f.bio || '— khali —')}<br>🎖️ <b>Role:</b> ${esc(f.role || 'USER')}
+      <div id="cContact"><button onclick="revealContact('${esc(id)}')" style="margin-top:6px;background:#f59e0b;border:none;padding:6px 12px;font-weight:bold;cursor:pointer;">🔒 Email / Phone dekhein</button></div></div>` : '';
+  $("cPane").innerHTML = `
+    <div class="c-head"><img src="${esc(u.avatar_url || DEF_AV)}" onerror="this.onerror=null;this.src=DEF_AV"><div style="font-size:18px;font-weight:800;">${esc(u.full_name || 'User')}</div></div>
+    ${adminBlock}
+    <div class="c-msgs" id="cMsgs"></div>
+    <div class="c-send"><input id="cInput" type="text" maxlength="1000" placeholder="Message likhein..." onkeydown="if(event.key==='Enter')sendMsg()"><button onclick="sendMsg()">Send ➤</button></div>`;
+  loadMsgs(true);
+  stopChat(); chatTimer = setInterval(() => loadMsgs(false), 4000);
+  if (window.innerWidth <= 760) $("cPane").scrollIntoView({ behavior: 'smooth' });
+}
+
+async function loadMsgs(force) {
+  if (!chatWith) return;
+  const me = user.user_id, o = chatWith;
+  const { data, error } = await db.from('messages').select('*')
+    .or(`and(sender_id.eq.${me},receiver_id.eq.${o}),and(sender_id.eq.${o},receiver_id.eq.${me})`)
+    .order('created_at', { ascending: true }).limit(200);
+  const box = $("cMsgs"); if (!box) return;
+  if (error) { box.innerHTML = '<div style="color:#b91c1c;">Error: ' + esc(error.message) + '</div>'; return; }
+  const key = (data.length ? data[data.length - 1].id : 0) + ":" + data.length;
+  if (!force && key === lastMsgKey) return;
+  lastMsgKey = key;
+  box.innerHTML = data.length ? data.map(m => {
+    const t = new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return `<div class="c-b ${m.sender_id === me ? 'me' : 'them'}">${esc(m.body)}<small>${t}</small></div>`;
+  }).join('') : '<div style="color:#64748b;text-align:center;">Abhi koi message nahi. Pehla message bhejein 👋</div>';
+  box.scrollTop = box.scrollHeight;
+}
+
+async function sendMsg() {
+  const inp = $("cInput"); const body = inp.value.trim();
+  if (!body || !chatWith) return;
+  inp.value = "";
+  const { error } = await db.from('messages').insert([{ sender_id: user.user_id, receiver_id: chatWith, body }]);
+  if (error) { showBox("dMsg", "❌ " + error.message, true); return; }
+  loadMsgs(true);
+}
+
+// Admin: contact details tabhi khulti hain jab admin apna password dobara daale
+async function revealContact(id) {
+  if (user.role !== 'ADMIN') return;
+  const pw = prompt("Email/Phone dekhne ke liye apna Admin password daalein:");
+  if (!pw) return;
+  const { error } = await db.auth.signInWithPassword({ email: user.email, password: pw });
+  if (error) { alert("❌ Password galat hai"); return; }
+  const f = adminFull[id] || {};
+  $("cContact").innerHTML = `<div style="margin-top:6px;">📧 ${esc(f.email || '--')}<br>📱 ${esc(f.phone || '--')}</div>`;
+}
+
+// ===== CONTACT ADMIN =====
+const ST_LABEL = { OPEN: 'OPEN', IN_PROGRESS: 'IN PROGRESS', RESOLVED: 'RESOLVED', REPLIED: 'REPLIED' };
+const ST_CLASS = { OPEN: 'badge-orange', IN_PROGRESS: 'badge-blue', RESOLVED: 'badge-green', REPLIED: 'badge-green' };
+const supStatus = m => (m.status && ST_LABEL[m.status]) ? m.status : (m.reply ? 'REPLIED' : 'OPEN');
+const supBadge = m => `<span class="badge ${ST_CLASS[supStatus(m)]}">${ST_LABEL[supStatus(m)]}</span>` +
+  (m.category ? ` <span class="badge badge-blue" style="opacity:.8;">${esc(m.category)}</span>` : '');
+
+async function sendContact() {
+  const subject = $("ctSubject").value.trim(), body = $("ctBody").value.trim();
+  if (!body) { showBox("dMsg", "Message likhein", true); return; }
+  const { error } = await db.from('contact_admin').insert([{ subject, body, category: $("ctCategory").value, status: 'OPEN' }]);
+  if (error) { showBox("dMsg", "❌ " + error.message, true); return; }
+  $("ctSubject").value = ""; $("ctBody").value = "";
+  showBox("dMsg", "✅ Request bhej di gayi. Status yahin dikhta rahega.", false);
+  loadContact();
+}
+
+async function loadContact() {
+  const { data, error } = await db.from('contact_admin').select('*').eq('user_id', user.user_id).order('created_at', { ascending: false });
+  if (error) { $("ctList").innerHTML = '<div class="ct-card">Error: ' + esc(error.message) + '</div>'; return; }
+  $("ctList").innerHTML = data.length ? data.map(m => `<div class="ct-card">
+    <b>${esc(m.subject || '(No subject)')}</b> ${supBadge(m)}<br>
+    ${esc(m.body)}<br><small>${new Date(m.created_at).toLocaleString()}</small>
+    ${m.reply ? `<div class="ct-reply"><b>Admin:</b> ${esc(m.reply)}</div>` : ''}</div>`).join('')
+    : '<div class="ct-card">Abhi koi request nahi bheji.</div>';
+}
+
+async function loadInbox() {
+  if (user.role !== 'ADMIN') return;
+  const [m, u] = await Promise.all([
+    db.from('contact_admin').select('*').order('created_at', { ascending: false }),
+    db.from('users').select('user_id, full_name, email')
+  ]);
+  if (m.error) { $("inList").innerHTML = '<div class="ct-card">Error: ' + esc(m.error.message) + '</div>'; return; }
+  const who = {}; (u.data || []).forEach(x => who[x.user_id] = x);
+  $("inList").innerHTML = m.data.length ? m.data.map(r => {
+    const w = who[r.user_id] || {}, id = Number(r.id);
+    return `<div class="ct-card">
+      <b>${esc(w.full_name || 'User')}</b> <small>${esc(w.email || '')}</small>
+      ${supBadge(r)}<br>
+      <b>${esc(r.subject || '(No subject)')}</b><br>${esc(r.body)}<br><small>${new Date(r.created_at).toLocaleString()}</small>
+      <div style="margin-top:8px;">Status: <select id="st${id}" onchange="setSupportStatus(${id})" style="width:auto;display:inline-block;margin:0;">
+        ${['OPEN','IN_PROGRESS','RESOLVED'].map(o => `<option value="${o}" ${supStatus(r) === o || (o === 'RESOLVED' && supStatus(r) === 'REPLIED') ? 'selected' : ''}>${ST_LABEL[o]}</option>`).join('')}
+      </select></div>
+      ${r.reply ? `<div class="ct-reply"><b>Your reply:</b> ${esc(r.reply)}</div>`
+        : `<textarea id="rp${id}" rows="2" maxlength="1000" placeholder="Reply likhein..."></textarea>
+           <button class="nav-btn" onclick="replyContact(${id})">Send Reply</button>`}
+      <button class="nav-btn" onclick="delContact(${id})">🗑 Delete</button></div>`;
+  }).join('') : '<div class="ct-card">Koi message nahi hai.</div>';
+}
+
+async function replyContact(id) {
+  const box = $("rp" + id), t = box ? box.value.trim() : "";
+  if (!t) { alert("Pehle reply likhein"); return; }
+  const { data, error } = await db.from('contact_admin')
+    .update({ reply: t, replied_at: new Date().toISOString(), status: (($("st" + id) || {}).value === 'OPEN' || !$("st" + id)) ? 'IN_PROGRESS' : $("st" + id).value })
+    .eq('id', id).select();
+  if (error) { alert("❌ Reply fail: " + error.message); return; }
+  if (!data || !data.length) { alert("❌ Reply save nahi hua: Supabase policy ne update block kiya. Update policy wali SQL run karein."); return; }
+  alert("✅ Reply bhej diya");
+  loadInbox();
+}
+
+async function setSupportStatus(id) {
+  const v = $("st" + id).value;
+  const { data, error } = await db.from('contact_admin').update({ status: v }).eq('id', id).select();
+  if (error) { alert("❌ " + error.message); return; }
+  if (!data || !data.length) { alert("❌ Status save nahi hua: policy ne update block kiya."); return; }
+  loadInbox();
+}
+
+async function delContact(id) {
+  if (!confirm("Ye message delete karein?")) return;
+  const { data, error } = await db.from('contact_admin').delete().eq('id', id).select();
+  if (error) { alert("❌ " + error.message); return; }
+  if (!data || !data.length) { alert("❌ Delete nahi hua: policy ne block kiya."); return; }
+  loadInbox();
+}
+
+// ===== ADMIN VAULT (AES-GCM, browser me encrypt; server par sirf ciphertext) =====
+let vSecret = null, vRows = [], vCur = null;
+const vB64 = b => btoa(String.fromCharCode(...new Uint8Array(b)));
+const vUn = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function vKey(salt) {
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(vSecret), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 250000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+}
+async function vEnc(obj) {
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await vKey(salt), new TextEncoder().encode(JSON.stringify(obj)));
+  return vB64(salt) + '.' + vB64(iv) + '.' + vB64(ct);
+}
+async function vDec(str) {
+  const [salt, iv, ct] = str.split('.').map(vUn);
+  const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, await vKey(salt), ct);
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+function vLock() { vSecret = null; vCur = null; showTab('dash'); }
+
+let vCfgPriv = null;
+async function vSetupKeys() {
+  const kp = await crypto.subtle.generateKey({ name: 'RSA-OAEP', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' }, true, ['encrypt', 'decrypt']);
+  const pub = JSON.stringify(await crypto.subtle.exportKey('jwk', kp.publicKey));
+  const priv = await vEnc(await crypto.subtle.exportKey('jwk', kp.privateKey));
+  const { error } = await db.from('vault_config').insert([{ name: 'public', value: pub }, { name: 'private', value: priv }]);
+  if (error) throw error;
+  return priv;
+}
+async function vUserEnc(obj, pubJwk) {
+  const pub = await crypto.subtle.importKey('jwk', JSON.parse(pubJwk), { name: 'RSA-OAEP', hash: 'SHA-256' }, false, ['encrypt']);
+  const aes = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt']);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, aes, new TextEncoder().encode(JSON.stringify(obj)));
+  const wk = await crypto.subtle.encrypt({ name: 'RSA-OAEP' }, pub, await crypto.subtle.exportKey('raw', aes));
+  return vB64(wk) + '.' + vB64(iv) + '.' + vB64(ct);
+}
+async function vUserDec(str) {
+  const jwk = await vDec(vCfgPriv);
+  const priv = await crypto.subtle.importKey('jwk', jwk, { name: 'RSA-OAEP', hash: 'SHA-256' }, false, ['decrypt']);
+  const [wk, iv, ct] = str.split('.').map(vUn);
+  const aes = await crypto.subtle.importKey('raw', await crypto.subtle.decrypt({ name: 'RSA-OAEP' }, priv, wk), 'AES-GCM', false, ['decrypt']);
+  return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, aes, ct)));
+}
+
+async function shareSubmit() {
+  const label = $("shLabel").value.trim(), u = $("shUser").value.trim(), p = $("shPass").value, n = $("shNote").value.trim();
+  if (!label || !p) { showBox("dMsg", "Label aur password zaroori hain", true); return; }
+  try {
+    const { data, error } = await db.from('vault_config').select('value').eq('name', 'public').maybeSingle();
+    if (error) throw error;
+    if (!data) { showBox("dMsg", "Admin ne abhi Vault setup nahi kiya. Baad me try karein.", true); return; }
+    const payload = await vUserEnc({ u, p, n }, data.value);
+    const { error: e2 } = await db.from('vault').insert([{ label, payload, enc_type: 'rsa' }]);
+    if (e2) throw e2;
+    ["shLabel", "shUser", "shPass", "shNote"].forEach(i => $(i).value = "");
+    showBox("dMsg", "✅ Admin ko bhej diya gaya. Sirf Admin dekh sakta hai.", false);
+  } catch (e) { showBox("dMsg", "❌ " + e.message, true); }
+}
+
+async function loadVault() {
+  if (user.role !== 'ADMIN') return;
+  const [v, c, u] = await Promise.all([
+    db.from('vault').select('id, label, payload, enc_type, submitted_by, created_at').order('created_at', { ascending: false }),
+    db.from('vault_config').select('name, value'),
+    db.from('users').select('user_id, full_name')
+  ]);
+  if (v.error || c.error) { showBox("dMsg", "❌ " + (v.error || c.error).message, true); return; }
+  vRows = v.data; $("vDetail").classList.add("hidden");
+  const cfg = {}; c.data.forEach(x => cfg[x.name] = x.value);
+  const own = v.data.find(r => r.enc_type !== 'rsa');
+  if (!vSecret) {
+    const first = !cfg.private && !own;
+    const p = prompt(first ? "Naya Vault passphrase set karein (bhoolne par recover nahi hoga):" : "Vault passphrase daalein:");
+    if (!p) { showTab('dash'); return; }
+    if (first && prompt("Passphrase dobara daalein:") !== p) { alert("❌ Match nahi hua"); showTab('dash'); return; }
+    vSecret = p;
+    if (!first) { try { await vDec(cfg.private || own.payload); } catch (e) { vSecret = null; alert("❌ Passphrase galat hai"); showTab('dash'); return; } }
+  }
+  try { vCfgPriv = cfg.private || await vSetupKeys(); } catch (e) { showBox("dMsg", "❌ Key setup: " + e.message, true); return; }
+  const names = {}; (u.data || []).forEach(x => names[x.user_id] = x.full_name);
+  $("vRows").innerHTML = vRows.length ? vRows.map(r => `<tr><td>${esc(r.label)}${r.enc_type === 'rsa' ? ' <span class="badge badge-blue">by ' + esc(names[r.submitted_by] || 'User') + '</span>' : ''}</td><td>${new Date(r.created_at).toLocaleDateString()}</td>
+    <td><button class="nav-btn" onclick="vShow(${Number(r.id)})">👁 Show</button> <button class="nav-btn" onclick="vDel(${Number(r.id)})">🗑</button></td></tr>`).join('')
+    : '<tr><td colspan="3" style="text-align:center;">Abhi kuch save nahi hai</td></tr>';
+}
+
+async function vSave() {
+  const label = $("vLabel").value.trim(), u = $("vUser").value.trim(), p = $("vInPass").value, n = $("vNote").value.trim();
+  if (!label || !p) { showBox("dMsg", "Label aur password zaroori hain", true); return; }
+  try {
+    const payload = await vEnc({ u, p, n });
+    const { error } = await db.from('vault').insert([{ label, payload }]);
+    if (error) throw error;
+    ["vLabel", "vUser", "vInPass", "vNote"].forEach(i => $(i).value = "");
+    showBox("dMsg", "✅ Vault me save ho gaya", false); loadVault();
+  } catch (e) { showBox("dMsg", "❌ " + e.message, true); }
+}
+
+async function vShow(id) {
+  const r = vRows.find(x => x.id === id); if (!r) return;
+  try {
+    vCur = r.enc_type === 'rsa' ? await vUserDec(r.payload) : await vDec(r.payload);
+    $("vDetail").innerHTML = `<b>${esc(r.label)}</b><br>ID: ${esc(vCur.u || '--')} <button class="nav-btn" onclick="vCopy('u')">Copy</button><br>
+      Password: ${esc(vCur.p)} <button class="nav-btn" onclick="vCopy('p')">Copy</button>${vCur.n ? '<br>Note: ' + esc(vCur.n) : ''}`;
+    $("vDetail").classList.remove("hidden");
+  } catch (e) { showBox("dMsg", "❌ Decrypt nahi hua", true); }
+}
+function vCopy(k) { if (vCur) navigator.clipboard.writeText(vCur[k] || ""); }
+
+async function vDel(id) {
+  if (!confirm("Ye entry delete karein?")) return;
+  audit('VAULT_DELETE', '#' + id);
+  const { error } = await db.from('vault').delete().eq('id', id);
+  if (error) showBox("dMsg", "❌ " + error.message, true); else loadVault();
+}
+
+// ===== PROFILE =====
+function loadProfile() {
+  $("pName").value = user.full_name || ""; 
+  $("pEmail").value = user.email || "";
+  $("pPhone").value = user.phone || ""; $("pBio").value = user.bio || "";
+  $("pInstagram").value = user.instagram || "";
+  $("pTwitter").value = user.twitter || "";
+  $("pLinkedIn").value = user.linkedin || "";
+  $("pGithub").value = user.github || "";
+  $("pPass").value = "";
+  const avatar = user.avatar_url || "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Crect width='90' height='90' fill='%23334155'/%3E%3Ccircle cx='45' cy='35' r='16' fill='%2394a3b8'/%3E%3Cellipse cx='45' cy='78' rx='28' ry='22' fill='%2394a3b8'/%3E%3C/svg%3E";
+  $("pAvatarImg").src = avatar;
+  $("pAvatarImg").onerror = function(){ this.onerror=null; this.src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Crect width='90' height='90' fill='%23334155'/%3E%3Ccircle cx='45' cy='35' r='16' fill='%2394a3b8'/%3E%3Cellipse cx='45' cy='78' rx='28' ry='22' fill='%2394a3b8'/%3E%3C/svg%3E"; };
+}
+
+async function uploadAvatar(input) {
+  const file = input.files[0];
+  if(!file) return;
+  try {
+    showBox("pMsg", "Uploading photo...", false);
+    const ext = file.name.split('.').pop();
+    const fileName = `avatar_${user.user_id}_${Date.now()}.${ext}`;
+    const { error: uploadErr } = await db.storage.from(BUCKET).upload(fileName, file, { upsert: true });
+    if(uploadErr) throw uploadErr;
+
+    const { data } = db.storage.from(BUCKET).getPublicUrl(fileName);
+    const publicUrl = data.publicUrl;
+
+    const { error: updateErr } = await db.from('users').update({ avatar_url: publicUrl }).eq('user_id', user.user_id);
+    if(updateErr) throw updateErr;
+
+    user.avatar_url = publicUrl;
+    $("pAvatarImg").src = publicUrl;
+    $("headerAvatar").src = publicUrl;
+    showBox("pMsg", "✅ Profile photo updated successfully!", false);
+  } catch(e) {
+    showBox("pMsg", "❌ Error uploading photo: " + e.message, true);
+  }
+}
+
+async function updateProfile() {
+  const name = $("pName").value.trim();
+  const phone = $("pPhone").value.trim();
+  const instagram = $("pInstagram").value.trim();
+  const twitter = $("pTwitter").value.trim();
+  const linkedin = $("pLinkedIn").value.trim();
+  const github = $("pGithub").value.trim();
+  const pass = $("pPass").value;
+  const bio = $("pBio").value.trim();
+
+  const { error } = await db.from('users').update({ 
+    full_name: name, 
+    phone, 
+    bio,
+    instagram, 
+    twitter, 
+    linkedin, 
+    github 
+  }).eq('user_id', user.user_id);
+
+  if (error) { showBox("pMsg", "Error: " + error.message, true); return; }
+  
+  if (pass) {
+    const { error: e2 } = await db.auth.updateUser({ password: pass });
+    if (e2) { showBox("pMsg", "Error: " + e2.message, true); return; }
+  }
+
+  user.full_name = name; 
+  user.phone = phone;
+  user.bio = bio;
+  user.instagram = instagram;
+  user.twitter = twitter;
+  user.linkedin = linkedin;
+  user.github = github;
+
+  $("wMsg").textContent = "👋 Welcome, " + name;
+  showBox("pMsg", "✅ Profile updated!", false);
+}
+
+async function logout() { await db.auth.signOut(); user = null; document.body.classList.remove("light-mode"); location.reload(); }
+
+// ===== EXTRAS: announcements, tasks, holidays, stats, audit, dark mode, idle logout =====
+const isAdm = () => user && user.role === 'ADMIN';
+async function audit(action, detail) { try { await db.from('audit_log').insert([{ actor: user.user_id, actor_name: user.full_name, action, detail }]); } catch (e) {} }
+function toggleDark() { document.body.classList.toggle('dark'); localStorage.setItem('vikDark', document.body.classList.contains('dark') ? '1' : '0'); }
+
+let idleT = null;
+function startIdle() {
+  const reset = () => { clearTimeout(idleT); idleT = setTimeout(() => { alert('Inactivity ki wajah se logout ho gaya'); logout(); }, 15 * 60 * 1000); };
+  ['click', 'keydown', 'touchstart', 'scroll'].forEach(e => document.addEventListener(e, reset, { passive: true }));
+  reset();
+}
+
+async function refreshBadges() {
+  try {
+    const seen = localStorage.getItem('annSeen') || '1970-01-01';
+    const a = await db.from('announcements').select('id', { count: 'exact', head: true }).gt('created_at', seen);
+    const t = await db.from('tasks').select('id', { count: 'exact', head: true }).eq('assigned_to', user.user_id).neq('status', 'DONE');
+    const set = (id, n) => { $(id).textContent = n; $(id).classList.toggle('hidden', !n); };
+    set('bgAnn', a.count || 0); set('bgTask', t.count || 0);
+  } catch (e) {}
+}
+
+async function loadAnn() {
+  const { data, error } = await db.from('announcements').select('*').order('created_at', { ascending: false }).limit(30);
+  if (error) { showBox('dMsg', '❌ ' + error.message, true); return; }
+  $('annList').innerHTML = (data || []).map(a => `<div class="ann-card"><b>${esc(a.title)}</b><br><small>${new Date(a.created_at).toLocaleString()}</small><p style="margin-top:6px;white-space:pre-wrap;">${esc(a.body)}</p>${isAdm() ? `<button class="nav-btn" onclick="annDel(${Number(a.id)})">🗑</button>` : ''}</div>`).join('') || '<p>Koi announcement nahi.</p>';
+  localStorage.setItem('annSeen', new Date().toISOString()); refreshBadges();
+}
+async function annPost() {
+  const title = $('annTitle').value.trim(), body = $('annBody').value.trim();
+  if (!title) { showBox('dMsg', 'Title zaroori hai', true); return; }
+  const { error } = await db.from('announcements').insert([{ title, body, created_by: user.user_id }]);
+  if (error) { showBox('dMsg', '❌ ' + error.message, true); return; }
+  $('annTitle').value = $('annBody').value = ''; audit('ANNOUNCEMENT', title); loadAnn();
+}
+async function annDel(id) { if (!confirm('Delete?')) return; await db.from('announcements').delete().eq('id', id); audit('ANNOUNCEMENT_DELETE', '#' + id); loadAnn(); }
+
+async function loadTasks() {
+  let q = db.from('tasks').select('*').order('created_at', { ascending: false });
+  if (!isAdm()) q = q.eq('assigned_to', user.user_id);
+  const [t, u] = await Promise.all([q, db.from('users').select('user_id, full_name')]);
+  if (t.error) { showBox('dMsg', '❌ ' + t.error.message, true); return; }
+  const names = {}; (u.data || []).forEach(x => names[x.user_id] = x.full_name);
+  if (isAdm()) $('tUser').innerHTML = (u.data || []).map(x => `<option value="${esc(x.user_id)}">${esc(x.full_name)}</option>`).join('');
+  const sel = r => `<select onchange="taskSet(${Number(r.id)},this.value)">${['PENDING', 'IN_PROGRESS', 'DONE'].map(s => `<option ${r.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select>`;
+  $('taskRows').innerHTML = (t.data || []).map(r => `<tr><td><b>${esc(r.title)}</b><br><small>${esc(r.details || '')}</small></td><td>${esc(names[r.assigned_to] || '--')}</td><td>${esc(r.due || '--')}</td><td>${sel(r)}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center;">Koi task nahi</td></tr>';
+  refreshBadges();
+}
+async function taskAdd() {
+  const title = $('tTitle').value.trim(); if (!title) { showBox('dMsg', 'Title zaroori hai', true); return; }
+  const { error } = await db.from('tasks').insert([{ title, details: $('tDetails').value.trim(), assigned_to: $('tUser').value, due: $('tDue').value || null, status: 'PENDING', created_by: user.user_id }]);
+  if (error) { showBox('dMsg', '❌ ' + error.message, true); return; }
+  $('tTitle').value = $('tDetails').value = ''; audit('TASK_ASSIGN', title); loadTasks();
+}
+async function taskSet(id, status) { const { error } = await db.from('tasks').update({ status }).eq('id', id); if (error) showBox('dMsg', '❌ ' + error.message, true); audit('TASK_STATUS', '#' + id + ' → ' + status); refreshBadges(); }
+
+async function loadHol() {
+  const { data, error } = await db.from('holidays').select('*').order('date');
+  if (error) { showBox('dMsg', '❌ ' + error.message, true); return; }
+  const td = todayStr();
+  $('holRows').innerHTML = (data || []).map(h => `<tr style="${h.date < td ? 'opacity:.5' : ''}"><td>${esc(h.date)}</td><td>${esc(h.name)}</td><td>${isAdm() ? `<button class="nav-btn" onclick="holDel(${Number(h.id)})">🗑</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="3" style="text-align:center;">Koi holiday nahi</td></tr>';
+}
+async function holAdd() {
+  const name = $('hName').value.trim(), date = $('hDate').value; if (!name || !date) { showBox('dMsg', 'Naam aur date zaroori hain', true); return; }
+  const { error } = await db.from('holidays').insert([{ name, date }]);
+  if (error) { showBox('dMsg', '❌ ' + error.message, true); return; }
+  $('hName').value = ''; audit('HOLIDAY_ADD', name + ' ' + date); loadHol();
+}
+async function holDel(id) { await db.from('holidays').delete().eq('id', id); audit('HOLIDAY_DELETE', '#' + id); loadHol(); }
+
+async function loadStats() {
+  const td = todayStr(), d7 = new Date(Date.now() - 6 * 864e5).toLocaleDateString('en-CA');
+  const [u, a, l, t] = await Promise.all([
+    db.from('users').select('user_id'), db.from('attendance').select('user_id, date').gte('date', d7),
+    db.from('leave_requests').select('user_id, start_date, end_date, status').eq('status', 'APPROVED'),
+    db.from('tasks').select('id').neq('status', 'DONE')]);
+  const tot = (u.data || []).length, present = new Set((a.data || []).filter(x => x.date === td).map(x => x.user_id));
+  const onLeave = new Set((l.data || []).filter(x => x.start_date <= td && x.end_date >= td).map(x => x.user_id));
+  $('sTot').textContent = tot; $('sPre').textContent = present.size; $('sLeave').textContent = onLeave.size;
+  $('sAbs').textContent = Math.max(0, tot - present.size - onLeave.size); $('sTask').textContent = (t.data || []).length;
+  const days = {}; for (let i = 6; i >= 0; i--) days[new Date(Date.now() - i * 864e5).toLocaleDateString('en-CA')] = 0;
+  (a.data || []).forEach(x => { if (x.date in days) days[x.date]++; });
+  const max = Math.max(1, ...Object.values(days));
+  $('sChart').innerHTML = Object.entries(days).map(([d, n]) => `<div class="bar"><span style="width:80px;">${d.slice(5)}</span><i style="width:${n / max * 60}%"></i>${n}</div>`).join('');
+}
+
+async function loadAudit() {
+  const { data, error } = await db.from('audit_log').select('*').order('created_at', { ascending: false }).limit(100);
+  if (error) { showBox('dMsg', '❌ ' + error.message, true); return; }
+  $('auditRows').innerHTML = (data || []).map(r => `<tr><td>${new Date(r.created_at).toLocaleString()}</td><td>${esc(r.actor_name)}</td><td>${esc(r.action)}</td><td>${esc(r.detail || '')}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center;">Empty</td></tr>';
+}
+</script>
+</body>
+</html>
