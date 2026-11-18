@@ -1,1 +1,47 @@
 
+name: Build Chromaprint Web
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout workflow repository
+        uses: actions/checkout@v4
+
+      - name: Clone Chromaprint source
+        run: |
+          git clone --depth 1 https://github.com/janis-me/rusty-chromaprint-wasm.git source
+
+      - name: Install Rust
+        run: |
+          rustup update stable
+          rustup target add wasm32-unknown-unknown
+          cargo install wasm-pack --version 0.15.0 --locked
+
+      - name: Build WebAssembly
+        working-directory: source/packages/chromaprint-wasm
+        run: |
+          wasm-pack build --target web --release --out-dir pkg --out-name rusty_chromaprint_wasm
+
+      - name: Verify build files
+        working-directory: source/packages/chromaprint-wasm/pkg
+        run: |
+          test -s rusty_chromaprint_wasm.js
+          test -s rusty_chromaprint_wasm_bg.wasm
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: chromaprint-web
+          path: |
+            source/packages/chromaprint-wasm/pkg/rusty_chromaprint_wasm.js
+            source/packages/chromaprint-wasm/pkg/rusty_chromaprint_wasm_bg.wasm
